@@ -1,0 +1,12 @@
+{
+  "name": "indexer-eq-tools",
+  "private": true,
+  "workspaces": [
+    "tools/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "proxy:dev": "bun --filter=\"proxy-eq\" dev",
+    "snapshot:dev": "bun --filter=\"snapshot-eq\" dev"
+  }
+}
