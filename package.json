@@ -1,5 +1,5 @@
 {
-  "name": "indexer-eq-tools",
+  "name": "ens-indexer-eq-tools",
   "private": true,
   "workspaces": [
     "tools/*",
