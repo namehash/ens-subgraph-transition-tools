@@ -4,11 +4,14 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "start": "bun run index.ts",
-    "dev": "bun run --watch index.ts"
+    "start": "bun run --env-file ../../.env.local index.ts",
+    "dev": "bun run --env-file ../../.env.local --watch index.ts"
   },
   "dependencies": {
-    "eq-lib": "workspace:*"
+    "@jsonjoy.com/util": "^1.5.0",
+    "@urql/core": "^5.1.0",
+    "eq-lib": "workspace:*",
+    "graphql": "^16.10.0"
   },
   "devDependencies": {
     "@types/bun": "latest"

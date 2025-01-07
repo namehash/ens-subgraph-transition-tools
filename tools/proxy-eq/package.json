@@ -4,8 +4,8 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "start": "bun run index.ts",
-    "dev": "bun run --watch index.ts"
+    "start": "bun run --env-file ../../.env.local index.ts",
+    "dev": "bun run --env-file ../../.env.local --watch index.ts"
   },
   "dependencies": {
     "eq-lib": "workspace:*"

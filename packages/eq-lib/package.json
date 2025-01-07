@@ -3,10 +3,17 @@
   "private": true,
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "dev": "bun run --watch index.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@jsonjoy.com/util": "^1.5.0",
+    "@urql/core": "^5.1.0"
   }
 }

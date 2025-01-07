@@ -21,6 +21,7 @@ b: playing around with the app and generating real-world responses produces no d
 
 - deterministic keying of graphql queries (inc args)
   - to support idempotency + saving of responses to disk
+  - 'operation key'
 - deterministic comparison of json response
 - graphql runtime tooling to inject block argument into subgraph queries
 
