@@ -4,8 +4,6 @@ This project provides a suite of tools for verifying that the `ens-multichain-in
 
 ### todo
 
-- [ ] rename project to `ens-indexer-transition-tools` to better communicate goals
-- [ ] rename `proxy-eq` to `api-eq`
 - [ ] explicitly confirm that PONDER_API_URL is _ready with block num matching blockheight
 
 ## snapshot equivalency tool (`snapshot-eq`)
@@ -25,7 +23,7 @@ for the subgraph, [timetravel queries](https://thegraph.com/docs/en/subgraphs/qu
 
 for ponder, timetravel is not supported, so the ponder indexer should be run until the specified `endBlock` and then snapshotted with this tool. in the future this may be automated, but currently the tool just enforces this context and relies on the user to run the `ens-multichain-indexer` project in parallel.
 
-## proxy equivalency tool (`proxy-eq`)
+## api equivalency tool (`api-eq`)
 
 > This tool verifies equivalency in API responses between the ENS Subgraph and the ens-multichain-indexer for any subgraph query that might be produced by ensjs by comparing results from live queries in realtime.
 

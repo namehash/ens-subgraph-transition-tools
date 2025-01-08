@@ -1,5 +1,5 @@
 {
-  "name": "proxy-eq",
+  "name": "api-eq",
   "private": true,
   "module": "index.ts",
   "type": "module",
