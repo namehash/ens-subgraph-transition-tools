@@ -4,7 +4,12 @@ This project provides a suite of tools for verifying that the `ens-multichain-in
 
 ### todo
 
+- [ ] include snapshots, as git LFS or zip somewhere
+- [ ] implement yargs for parsing command args
 - [ ] explicitly confirm that PONDER_API_URL is _ready with block num matching blockheight
+- [ ] implement retryExchange and remove sleep code
+- [ ] implement all top-level collection queries
+- [ ] implement diff command
 
 ## snapshot equivalency tool (`snapshot-eq`)
 
