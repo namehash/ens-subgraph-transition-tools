@@ -4,6 +4,7 @@ import { makeClient } from "eq-lib";
 import { sleep } from "bun";
 import { print } from "graphql";
 import { ALL_QUERIES } from "./collection-queries";
+import { getFirstFieldName, getFirstOperationName } from "./lib/helpers";
 import { hasSnapshot, makeSnapshotPath, persistSnapshot } from "./lib/snapshots";
 import { injectSubgraphBlockHeightArgument } from "./lib/subgraph-ops";
 import { Indexer } from "./lib/types";
@@ -22,6 +23,13 @@ async function paginate(indexer: Indexer, query: TypedDocumentNode, blockheight:
 
 	const client = makeClient(url);
 
+	const operationName = getFirstOperationName(query);
+	const fieldName = getFirstFieldName(query);
+	if (!fieldName) {
+		console.log(print(query));
+		throw new Error("Unexpected collection query format, unable to extract fieldName");
+	}
+
 	let i = 0;
 	while (true) {
 		const first = BATCH_SIZE;
@@ -30,10 +38,10 @@ async function paginate(indexer: Indexer, query: TypedDocumentNode, blockheight:
 		// NOTE: always derive the operation key from the un-altered query
 		const operationKey = createRequest(query, { first, skip }).key.toString();
 
-		// if querying the subgraph, inject the blockheight argument into every query
 		const document =
-			indexer === Indexer.Ponder ? query : injectSubgraphBlockHeightArgument(query, blockheight);
-		const request = createRequest(document, { first, skip });
+			indexer === Indexer.Ponder //
+				? query // ponder uses query as-is
+				: injectSubgraphBlockHeightArgument(query, blockheight); // inject blockheight if subgraph
 
 		const snapshotPath = makeSnapshotPath({
 			blockheight,
@@ -44,25 +52,33 @@ async function paginate(indexer: Indexer, query: TypedDocumentNode, blockheight:
 		// skip any requests that have already been fetched & persisted
 		const _hasSnapshot = await hasSnapshot(snapshotPath);
 		if (_hasSnapshot) {
-			console.log(`(${skip}, ${skip + first}] — cached, continuing...`);
+			console.log(`${operationName} (${skip}, ${skip + first}] — cached, continuing...`);
 		} else {
-			console.log(`(${skip}, ${skip + first}] — fetching...`);
+			console.log(`${operationName} (${skip}, ${skip + first}] — fetching...`);
 
-			const { data, error } = await client.executeQuery(request);
+			const { data, error } = await client.query(document, { first, skip });
+
+			// if we recieved an error, surface and bail
 			if (error) {
 				console.log(`URL: ${url}`);
 				console.log(print(document));
 				throw error;
 			}
-			console.log(`  ↳ fetched ${first} records`);
 
-			// TODO: get collection field, get length of response, break if < `first`
+			const items = data[fieldName] as unknown[];
 
+			// if we receive 0 items, we are done with this collection
+			if (items.length < first) {
+				console.log(`${operationName} — done snapshotting `);
+				return;
+			}
+
+			// otherwise we got some data, persist result and continue
 			await persistSnapshot(snapshotPath, JSON.stringify(data));
+			console.log(`  ↳ persisted ${first} records`);
 		}
 
 		i++;
-		break;
 	}
 }
 
@@ -74,5 +90,4 @@ async function snapshot(indexer: Indexer, blockheight: number) {
 	}
 }
 
-await snapshot(Indexer.Subgraph, 12_000_000);
-process.exit(0);
+await snapshot(Indexer.Subgraph, 4_000_000);
