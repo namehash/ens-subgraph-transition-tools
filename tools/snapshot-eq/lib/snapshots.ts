@@ -1,5 +1,15 @@
 import type { Indexer } from "./types";
 
+export function makeSnapshotDirectoryPath({
+	blockheight,
+	indexer,
+}: {
+	blockheight: number;
+	indexer: Indexer;
+}) {
+	return ["snapshots", blockheight, indexer].join("/");
+}
+
 export function makeSnapshotPath({
 	blockheight,
 	indexer,
@@ -9,7 +19,7 @@ export function makeSnapshotPath({
 	indexer: Indexer;
 	operationKey: string;
 }) {
-	return ["snapshots", blockheight, indexer, `${operationKey}.json`].join("/");
+	return [makeSnapshotDirectoryPath({ blockheight, indexer }), `${operationKey}.json`].join("/");
 }
 
 export async function hasSnapshot(path: string) {

@@ -3,8 +3,9 @@ import { gql } from "@urql/core";
 const AllDomainFields = gql`
 fragment AllDomainFields on Domain {
   id
-  name
-  labelName
+  # TODO: re-enable name and labelName once label healing is integrated into ponder
+  # name
+  # labelName
   labelhash
   parent { id }
   subdomainCount

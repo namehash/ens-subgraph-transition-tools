@@ -1,11 +1,17 @@
 import { type TypedDocumentNode, createRequest } from "@urql/core";
-import { makeClient } from "eq-lib";
+import { diffJson, makeClient } from "eq-lib";
 
-import { sleep } from "bun";
+import { parse } from "node:path";
+import { Glob, sleep } from "bun";
 import { print } from "graphql";
 import { ALL_QUERIES } from "./collection-queries";
 import { getFirstFieldName, getFirstOperationName } from "./lib/helpers";
-import { hasSnapshot, makeSnapshotPath, persistSnapshot } from "./lib/snapshots";
+import {
+	hasSnapshot,
+	makeSnapshotDirectoryPath,
+	makeSnapshotPath,
+	persistSnapshot,
+} from "./lib/snapshots";
 import { injectSubgraphBlockHeightArgument } from "./lib/subgraph-ops";
 import { Indexer } from "./lib/types";
 import { PonderMeta } from "./ponder-meta";
@@ -101,7 +107,7 @@ async function paginate(indexer: Indexer, query: TypedDocumentNode, blockheight:
 	}
 }
 
-async function snapshot(indexer: Indexer, blockheight: number) {
+async function snapshotCommand(indexer: Indexer, blockheight: number) {
 	for (const query of ALL_QUERIES) {
 		await paginate(indexer, query, blockheight);
 		// TODO: better retry/ratelimiting logic
@@ -109,4 +115,51 @@ async function snapshot(indexer: Indexer, blockheight: number) {
 	}
 }
 
-await snapshot(Indexer.Ponder, 4_000_000);
+async function diffCommand(blockheight: number) {
+	const subgraphSnapshotDirectory = makeSnapshotDirectoryPath({
+		blockheight,
+		indexer: Indexer.Subgraph,
+	});
+
+	const subgraphSnapshots = new Glob("*.json").scan(subgraphSnapshotDirectory);
+
+	for await (const snapshotFileName of subgraphSnapshots) {
+		const operationKey = parse(snapshotFileName).name;
+		// subgraph snapshot guaranteed to exist
+		const subgraphSnapshot = await Bun.file(
+			makeSnapshotPath({
+				blockheight,
+				indexer: Indexer.Subgraph,
+				operationKey,
+			}),
+		).json();
+
+		// ponder snapshot not guaranteed
+		const ponderSnapshotPath = makeSnapshotPath({
+			blockheight,
+			indexer: Indexer.Ponder,
+			operationKey,
+		});
+
+		const exists = await Bun.file(ponderSnapshotPath).exists();
+		if (!exists) {
+			throw new Error(`Ponder Snapshot (${blockheight}) does not have '${operationKey}.json'`);
+		}
+
+		const ponderSnapshot = await Bun.file(ponderSnapshotPath).json();
+
+		// they both exist, let's diff them
+		const result = await diffJson(subgraphSnapshot, ponderSnapshot);
+
+		// they're equal, huzzah
+		if (result.equal) continue;
+
+		// otherwise, print and throw
+		console.error(`Difference Found in operationKey ${operationKey}.json`);
+		// console.error(JSON.stringify(result.diff));
+		process.exit(1);
+	}
+}
+
+// await snapshot(Indexer.Ponder, 4_000_000);
+await diffCommand(4_000_000);
