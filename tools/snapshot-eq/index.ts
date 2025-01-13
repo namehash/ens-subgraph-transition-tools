@@ -8,6 +8,7 @@ import { getFirstFieldName, getFirstOperationName } from "./lib/helpers";
 import { hasSnapshot, makeSnapshotPath, persistSnapshot } from "./lib/snapshots";
 import { injectSubgraphBlockHeightArgument } from "./lib/subgraph-ops";
 import { Indexer } from "./lib/types";
+import { PonderMeta } from "./ponder-meta";
 
 const makeSubgraphUrl = (apiKey: string) =>
 	`https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/5XqPmWe6gjyrJtFn9cLy237i4cWw2j9HcUJEXsP5qGtH`;
@@ -22,6 +23,24 @@ async function paginate(indexer: Indexer, query: TypedDocumentNode, blockheight:
 				makeSubgraphUrl(Bun.env.SUBGRAPH_API_KEY!);
 
 	const client = makeClient(url);
+
+	// if ponder, confirm that indexer is at the specific blockneight and is ready
+	if (indexer === Indexer.Ponder) {
+		const { data } = await client.query(PonderMeta);
+		// NOTE: hardcodes mainnet
+		const {
+			ready,
+			block: { number: ponderBlockheight },
+		} = data._meta.status.mainnet;
+
+		if (!ready) {
+			throw new Error("Ponder is not _meta.status.mainnet.ready");
+		}
+
+		if (ponderBlockheight !== blockheight) {
+			throw new Error(`Ponder is at ${ponderBlockheight}, ${blockheight} requeted.`);
+		}
+	}
 
 	const operationName = getFirstOperationName(query);
 	const fieldName = getFirstFieldName(query);
@@ -90,4 +109,4 @@ async function snapshot(indexer: Indexer, blockheight: number) {
 	}
 }
 
-await snapshot(Indexer.Subgraph, 4_000_000);
+await snapshot(Indexer.Ponder, 4_000_000);
