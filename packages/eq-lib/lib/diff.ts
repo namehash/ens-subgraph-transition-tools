@@ -2,71 +2,48 @@ import { deepEqual } from "@jsonjoy.com/util/lib/json-equal/deepEqual";
 
 export type JsonDiff = {
 	equal: boolean;
-	diff?: {
-		added?: Record<string, unknown>;
-		removed?: Record<string, unknown>;
-		changed?: Record<
-			string,
-			{
-				old: unknown;
-				new: unknown;
-			}
-		>;
-	};
+	diffs?: Record<
+		string,
+		{
+			old: unknown;
+			new: unknown;
+		}
+	>;
 };
 
-// this code partially via claude
 export function diffJson(a: Record<string, unknown>, b: Record<string, unknown>): JsonDiff {
-	// check if objects are identical
 	if (deepEqual(a, b)) return { equal: true };
 
-	// not equal? provide diff
+	const diffs: Required<JsonDiff>["diffs"] = {};
 
-	// Handle non-object cases
-	if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) {
-		return {
-			equal: false,
-			diff: {
-				changed: {
-					"": { old: a, new: b },
-				},
-			},
-		};
+	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	function compare(objA: any, objB: any, path = "") {
+		if (typeof objA !== "object" || typeof objB !== "object" || objA === null || objB === null) {
+			if (objA !== objB) {
+				diffs[path] = { old: objA, new: objB };
+			}
+			return;
+		}
+
+		const keys = new Set([...Object.keys(objA), ...Object.keys(objB)]);
+
+		for (const key of keys) {
+			const newPath = path ? `${path}.${key}` : key;
+
+			if (!(key in objA)) {
+				diffs[newPath] = { old: undefined, new: objB[key] };
+			} else if (!(key in objB)) {
+				diffs[newPath] = { old: objA[key], new: undefined };
+			} else {
+				compare(objA[key], objB[key], newPath);
+			}
+		}
 	}
 
-	// Objects are different - compute detailed diff
-	const diff: JsonDiff["diff"] = {};
-	const aKeys = Object.keys(a);
-	const bKeys = Object.keys(b);
-
-	// Find removed keys
-	const removed = aKeys.filter((k) => !(k in b));
-	if (removed.length) {
-		diff.removed = Object.fromEntries(removed.map((k) => [k, a[k]]));
-	}
-
-	// Find added keys
-	const added = bKeys.filter((k) => !(k in a));
-	if (added.length) {
-		diff.added = Object.fromEntries(added.map((k) => [k, b[k]]));
-	}
-
-	// Find changed values
-	const changed = aKeys.filter((k) => k in b && a[k] !== b[k]);
-	if (changed.length) {
-		diff.changed = Object.fromEntries(
-			changed.map((k) => [
-				k,
-				{
-					old: (a as Record<string, unknown>)[k],
-					new: (b as Record<string, unknown>)[k],
-				},
-			]),
-		);
-	}
+	compare(a, b);
 
 	return {
-		equal: Object.keys(diff).length === 0,
-		diff: Object.keys(diff).length > 0 ? diff : undefined,
+		equal: Object.keys(diffs).length === 0,
+		diffs,
 	};
 }

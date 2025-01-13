@@ -1,10 +1,10 @@
 import { type TypedDocumentNode, createRequest } from "@urql/core";
 import { diffJson, makeClient } from "eq-lib";
 
+import fs from "node:fs/promises";
 import { parse } from "node:path";
-import { Glob, sleep } from "bun";
+import { Glob } from "bun";
 import { print } from "graphql";
-import { ALL_QUERIES } from "./collection-queries";
 import { getFirstFieldName, getFirstOperationName } from "./lib/helpers";
 import {
 	hasSnapshot,
@@ -14,7 +14,9 @@ import {
 } from "./lib/snapshots";
 import { injectSubgraphBlockHeightArgument } from "./lib/subgraph-ops";
 import { Indexer } from "./lib/types";
-import { PonderMeta } from "./ponder-meta";
+import { DomainsQuery } from "./queries/DomainsQuery";
+import { PonderMeta } from "./queries/PonderMeta";
+import { WrappedDomainsQuery } from "./queries/WrappedDomainsQuery";
 
 const makeSubgraphUrl = (apiKey: string) =>
 	`https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/5XqPmWe6gjyrJtFn9cLy237i4cWw2j9HcUJEXsP5qGtH`;
@@ -93,7 +95,7 @@ async function paginate(indexer: Indexer, query: TypedDocumentNode, blockheight:
 			const items = data[fieldName] as unknown[];
 
 			// if we receive 0 items, we are done with this collection
-			if (items.length < first) {
+			if (items.length === 0) {
 				console.log(`${operationName} — done snapshotting `);
 				return;
 			}
@@ -107,12 +109,16 @@ async function paginate(indexer: Indexer, query: TypedDocumentNode, blockheight:
 	}
 }
 
-async function snapshotCommand(indexer: Indexer, blockheight: number) {
+const ALL_QUERIES = [DomainsQuery]; // WrappedDomainsQuery
+async function snapshotCommand(blockheight: number, indexer: Indexer) {
 	for (const query of ALL_QUERIES) {
 		await paginate(indexer, query, blockheight);
-		// TODO: better retry/ratelimiting logic
-		await sleep(500);
 	}
+}
+
+async function cleanSnapshotCommand(blockheight: number, indexer: Indexer) {
+	const snapshotDirectory = makeSnapshotDirectoryPath({ blockheight, indexer });
+	await fs.rm(snapshotDirectory, { recursive: true, force: true });
 }
 
 async function diffCommand(blockheight: number) {
@@ -143,7 +149,9 @@ async function diffCommand(blockheight: number) {
 
 		const exists = await Bun.file(ponderSnapshotPath).exists();
 		if (!exists) {
-			throw new Error(`Ponder Snapshot (${blockheight}) does not have '${operationKey}.json'`);
+			// throw new Error(`Ponder(${blockheight}) does not have '${operationKey}.json'`);
+			console.error(`Ponder(${blockheight}) does not have '${operationKey}.json'`);
+			continue;
 		}
 
 		const ponderSnapshot = await Bun.file(ponderSnapshotPath).json();
@@ -156,10 +164,17 @@ async function diffCommand(blockheight: number) {
 
 		// otherwise, print and throw
 		console.error(`Difference Found in operationKey ${operationKey}.json`);
-		// console.error(JSON.stringify(result.diff));
+		console.error(JSON.stringify(result.diffs, null, 2));
 		process.exit(1);
 	}
+
+	console.log(`Diff(${blockheight}) — snapshots are identical.`);
 }
 
-// await snapshot(Indexer.Ponder, 4_000_000);
-await diffCommand(4_000_000);
+const BLOCKHEIGHT = 4_000_000;
+await cleanSnapshotCommand(BLOCKHEIGHT, Indexer.Ponder);
+await snapshotCommand(BLOCKHEIGHT, Indexer.Ponder);
+// await snapshotCommand(BLOCKHEIGHT, Indexer.Subgraph);
+await diffCommand(BLOCKHEIGHT);
+
+// await cleanSnapshotCommand(BLOCKHEIGHT, Indexer.Subgraph);

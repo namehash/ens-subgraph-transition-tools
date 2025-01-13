@@ -6,9 +6,7 @@ This project provides a suite of tools for verifying that the `ens-multichain-in
 
 - [ ] include snapshots, as git LFS or zip somewhere
 - [ ] implement yargs for parsing command args
-- [ ] implement retryExchange and remove sleep code
 - [ ] implement all top-level collection queries
-- [ ] implement diff command
 
 ## snapshot equivalency tool (`snapshot-eq`)
 
