@@ -183,8 +183,8 @@ async function diffCommand(blockheight: number) {
 
 const BLOCKHEIGHT = 4_000_000;
 
-// await cleanSnapshotCommand(BLOCKHEIGHT, Indexer.Ponder);
-// await snapshotCommand(BLOCKHEIGHT, Indexer.Ponder);
+await cleanSnapshotCommand(BLOCKHEIGHT, Indexer.Ponder);
+await snapshotCommand(BLOCKHEIGHT, Indexer.Ponder);
 
 // await cleanSnapshotCommand(BLOCKHEIGHT, Indexer.Subgraph);
 // await snapshotCommand(BLOCKHEIGHT, Indexer.Subgraph);
