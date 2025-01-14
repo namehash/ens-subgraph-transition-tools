@@ -11,10 +11,12 @@
     "@jsonjoy.com/util": "^1.5.0",
     "@urql/core": "^5.1.0",
     "eq-lib": "workspace:*",
-    "graphql": "^16.10.0"
+    "graphql": "^16.10.0",
+    "yargs": "^17.7.2"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/yargs": "^17.0.33"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
