@@ -8,17 +8,30 @@ This project provides a suite of tools for verifying that the `ens-multichain-in
   - seems that resolver factory events aren't being indexed, inc. the former public resolver `0x1da022710df5002339274aadee8d58218e9d6ab5`
 - [ ] enforce static order with `orderBy: id`, dependent on orderBy enum support in indexer
 - [ ] include snapshots, as git LFS or zip somewhere
-- [ ] implement yargs for parsing command args
-- [ ] implement all top-level collection queries
+- [ ] add events top-level queries
+- [ ] configure tools index's as bin for simpler calling
 
 ## snapshot equivalency tool (`snapshot-eq`)
 
 > this tool appoximates a database dump & diff, but via the graphql api. it iterates over relevant top-level collection queries, paginating over all records compares their responses to highlight discrepancies.
 
+configure via env variables or `.env.local` at root of project or inline
+- `PONDER_API_URL`
+- `SUBGRAPH_API_KEY`
+
 commands:
-- `snapshot subgraph <blockheight>`
-- `snapshot ponder <blockheight>`
+- `bun run start -- --help`
+- `bun run start -- snapshot <blockheight> <ponder|subgraph>`
+  - takes a 'snapshot' of the indexer at the provided blockheight by iterating over `n` collection queries
+    - persists responses to `snapshots/[:blockheight]/[:indexer]/[:operationKey].json`
+  - if ponder, code enforces that the indexer is ready at that blockheight
+  - if subgraph, timetravel queries are used
+- `bun run start -- clean <blockheight> <ponder|subgraph>`
+  - deletes the `snapshots/[:blockheight]/[:indexer]/` directory to bust the snapshot cache
 - `diff <blockheight>`
+  - using subgraph responses as the source of truth, compares the snapshots at `snapshots/[:blockheight]/subgraph/*.json` wtih those at `snapshots/[:blockheight]/ponder/*.json` and prints the differences between them to assist with debugging
+
+### description
 
 to index the subgraph or ponder at a specific blockheight, the tool runs an exhaustive set of graphql queries, using the subgraph as source of truth. for each generated query, the idempotent results are stored as json files in `snapshots/[:blockheight]/[:indexer]/[:operationKey].json` which can be compared using the `diff` command.
 
