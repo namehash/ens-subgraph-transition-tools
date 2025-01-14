@@ -10,8 +10,7 @@ export const DomainsQuery = gql`
       labelhash
       parent { id }
       subdomainCount
-      # TODO: re-enable after https://github.com/namehash/ens-multichain-indexer/issues/25
-      # resolvedAddress { id }
+      resolvedAddress { id }
       resolver { id }
       ttl
       isMigrated
