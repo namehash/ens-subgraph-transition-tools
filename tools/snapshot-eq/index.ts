@@ -14,8 +14,11 @@ import {
 } from "./lib/snapshots";
 import { injectSubgraphBlockHeightArgument } from "./lib/subgraph-ops";
 import { Indexer } from "./lib/types";
+import { AccountsQuery } from "./queries/AccountsQuery";
 import { DomainsQuery } from "./queries/DomainsQuery";
 import { PonderMeta } from "./queries/PonderMeta";
+import { RegistrationsQuery } from "./queries/RegistrationsQuery";
+import { ResolversQuery } from "./queries/ResolversQuery";
 import { WrappedDomainsQuery } from "./queries/WrappedDomainsQuery";
 
 const makeSubgraphUrl = (apiKey: string) =>
@@ -109,7 +112,14 @@ async function paginate(indexer: Indexer, query: TypedDocumentNode, blockheight:
 	}
 }
 
-const ALL_QUERIES = [DomainsQuery]; // WrappedDomainsQuery
+const ALL_QUERIES = [
+	DomainsQuery,
+	AccountsQuery,
+	ResolversQuery,
+	RegistrationsQuery,
+	WrappedDomainsQuery,
+];
+
 async function snapshotCommand(blockheight: number, indexer: Indexer) {
 	for (const query of ALL_QUERIES) {
 		await paginate(indexer, query, blockheight);
@@ -164,7 +174,7 @@ async function diffCommand(blockheight: number) {
 
 		// otherwise, print and throw
 		console.error(`Difference Found in operationKey ${operationKey}.json`);
-		console.error(JSON.stringify(result.diffs, null, 2));
+		console.error(JSON.stringify(result, null, 2));
 		process.exit(1);
 	}
 
@@ -172,8 +182,11 @@ async function diffCommand(blockheight: number) {
 }
 
 const BLOCKHEIGHT = 4_000_000;
-await cleanSnapshotCommand(BLOCKHEIGHT, Indexer.Ponder);
-await snapshotCommand(BLOCKHEIGHT, Indexer.Ponder);
+
+// await cleanSnapshotCommand(BLOCKHEIGHT, Indexer.Ponder);
+// await snapshotCommand(BLOCKHEIGHT, Indexer.Ponder);
+
+// await cleanSnapshotCommand(BLOCKHEIGHT, Indexer.Subgraph);
 // await snapshotCommand(BLOCKHEIGHT, Indexer.Subgraph);
 await diffCommand(BLOCKHEIGHT);
 

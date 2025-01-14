@@ -4,6 +4,8 @@ This project provides a suite of tools for verifying that the `ens-multichain-in
 
 ### todo
 
+- [ ] resolver.addr (and therefore Domain.resolvedAddress) is null in many (but not all) cases
+  - seems to be that the former public resolver 0x1da022710df5002339274aadee8d58218e9d6ab5 is just not being indexed at all
 - [ ] include snapshots, as git LFS or zip somewhere
 - [ ] implement yargs for parsing command args
 - [ ] implement all top-level collection queries
