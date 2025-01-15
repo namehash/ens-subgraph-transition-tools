@@ -9,7 +9,8 @@ export const RegistrationsQuery = gql`
       expiryDate
       cost
       registrant { id }
-      labelName
+      # TODO: add back once we have label healing
+      # labelName
     }
   }
 `;
