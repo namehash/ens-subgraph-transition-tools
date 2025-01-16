@@ -1,4 +1,9 @@
+import { resolve } from 'node:path'
+
 import type { Indexer } from "./types";
+
+// NOTE: don't love this, is there a better way to get to the root of the monorepo?
+const projectRootDir = resolve(__dirname, '../../..')
 
 export function makeSnapshotDirectoryPath({
 	blockheight,
@@ -7,7 +12,7 @@ export function makeSnapshotDirectoryPath({
 	blockheight: number;
 	indexer: Indexer;
 }) {
-	return ["snapshots", blockheight, indexer].join("/");
+	return resolve(projectRootDir, "snapshots", blockheight.toString(), indexer);
 }
 
 export function makeSnapshotPath({
@@ -19,7 +24,7 @@ export function makeSnapshotPath({
 	indexer: Indexer;
 	operationKey: string;
 }) {
-	return [makeSnapshotDirectoryPath({ blockheight, indexer }), `${operationKey}.json`].join("/");
+	return resolve(makeSnapshotDirectoryPath({ blockheight, indexer }), `${operationKey}.json`);
 }
 
 export async function hasSnapshot(path: string) {
@@ -27,5 +32,5 @@ export async function hasSnapshot(path: string) {
 }
 
 export async function persistSnapshot(path: string, response: string) {
-	await Bun.write(path, response);
+	return await Bun.write(path, response);
 }

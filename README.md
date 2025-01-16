@@ -4,9 +4,6 @@ This project provides a suite of tools for verifying that [ENSNode](https://gith
 
 ### todo
 
-- [ ] resolver.addr (and therefore Domain.resolvedAddress) is null in many (but not all) cases
-  - seems that resolver factory events aren't being indexed, inc. the former public resolver `0x1da022710df5002339274aadee8d58218e9d6ab5`
-- [ ] enforce static order with `orderBy: id`, dependent on orderBy enum support in ENSNode
 - [ ] include snapshots, as git LFS or zip somewhere
 - [ ] add events top-level queries
 - [ ] configure tools index's as bin for simpler calling
@@ -19,14 +16,14 @@ configure via env variables or `.env.local` at root of project or inline
 - `PONDER_API_URL`
 - `SUBGRAPH_API_KEY`
 
-commands:
-- `bun run start -- --help`
-- `bun run start -- snapshot <blockheight> <ponder|subgraph>`
+commands, (run from the root of the project):
+- `bun snapshot-eq --help`
+- `bun snapshot-eq snapshot <blockheight> <ponder|subgraph>`
   - takes a 'snapshot' of the indexer at the provided blockheight by iterating over `n` collection queries
     - persists responses to `snapshots/[:blockheight]/[:indexer]/[:operationKey].json`
   - if ponder, code enforces that the indexer is ready at that blockheight
   - if subgraph, timetravel queries are used
-- `bun run start -- clean <blockheight> <ponder|subgraph>`
+- `bun snapshot-eq clean <blockheight> <ponder|subgraph>`
   - deletes the `snapshots/[:blockheight]/[:indexer]/` directory to bust the snapshot cache
 - `diff <blockheight>`
   - using subgraph responses as the source of truth, compares the snapshots at `snapshots/[:blockheight]/subgraph/*.json` wtih those at `snapshots/[:blockheight]/ponder/*.json` and prints the differences between them to assist with debugging
