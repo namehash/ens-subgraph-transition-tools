@@ -1,5 +1,5 @@
 {
-  "name": "ens-indexer-transition-tools",
+  "name": "ens-subgraph-transition-tools",
   "private": true,
   "workspaces": [
     "tools/*",
