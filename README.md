@@ -4,8 +4,8 @@ This project provides a suite of tools for verifying that [ENSNode](https://gith
 
 ### todo
 
-- [ ] include snapshots, as git LFS or zip somewhere
 - [ ] add events top-level queries
+- [ ] include snapshots, as git LFS or zip somewhere
 - [ ] configure tools index's as bin for simpler calling
 
 ## snapshot equivalency tool (`snapshot-eq`)

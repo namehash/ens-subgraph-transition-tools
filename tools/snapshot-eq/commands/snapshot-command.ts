@@ -55,6 +55,9 @@ async function paginate(indexer: Indexer, query: TypedDocumentNode, blockheight:
 		const first = BATCH_SIZE;
 		const skip = i * BATCH_SIZE;
 
+		// inc i here so early continue works as expected
+		i++;
+
 		// NOTE: always derive the operation key from the un-altered query
 		const operationKey = createRequest(query, { first, skip }).key.toString();
 
@@ -73,32 +76,33 @@ async function paginate(indexer: Indexer, query: TypedDocumentNode, blockheight:
 		const _hasSnapshot = await hasSnapshot(snapshotPath);
 		if (_hasSnapshot) {
 			console.log(`${operationName} (${skip}, ${skip + first}] — cached, continuing...`);
-		} else {
-			console.log(`${operationName} (${skip}, ${skip + first}] — fetching...`);
-
-			const { data, error } = await client.query(document, { first, skip });
-
-			// if we recieved an error, surface and bail
-			if (error) {
-				console.log(`URL: ${url}`);
-				console.log(print(document));
-				throw error;
-			}
-
-			const items = data[fieldName] as unknown[];
-
-			// if we receive 0 items, we are done with this collection
-			if (items.length === 0) {
-				console.log(`${operationName} — done snapshotting `);
-				return;
-			}
-
-			// otherwise we got some data, persist result and continue
-			await persistSnapshot(snapshotPath, JSON.stringify(data));
-			console.log(`  ↳ persisted ${first} records`);
+			continue;
 		}
 
-		i++;
+		console.log(`${operationName} (${skip}, ${skip + first}] — fetching...`);
+
+		const startTime = performance.now();
+		const { data, error } = await client.query(document, { first, skip });
+		const requestDuration = (performance.now() - startTime) / 1000;
+
+		// if we recieved an error, surface and bail
+		if (error) {
+			console.log(`URL: ${url}`);
+			console.log(print(document));
+			throw error;
+		}
+
+		const items = data[fieldName] as unknown[];
+
+		// if we receive 0 items, we are done with this collection
+		if (items.length === 0) {
+			console.log(`${operationName} — done snapshotting `);
+			return;
+		}
+
+		// otherwise we got some data, persist result and continue
+		await persistSnapshot(snapshotPath, JSON.stringify(data));
+		console.log(`  ↳ persisted ${first} records (${requestDuration.toFixed(4)}s)`);
 	}
 }
 
