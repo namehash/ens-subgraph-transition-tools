@@ -4,9 +4,8 @@ This project provides a suite of tools for verifying that [ENSNode](https://gith
 
 ### todo
 
-- [ ] add events top-level queries
-- [ ] include snapshots, as git LFS or zip somewhere
-- [ ] configure tools index's as bin for simpler calling
+- [ ] after integrating label healing, submit new snapshots
+- [ ] add exhaustive events export to relevant entities
 
 ## snapshot equivalency tool (`snapshot-eq`)
 
@@ -37,6 +36,28 @@ an `operationKey` is a [deterministic hash of a graphql document + variables](ht
 for the subgraph, [timetravel queries](https://thegraph.com/docs/en/subgraphs/querying/graphql-api/#time-travel-queries) are used to retrieve data at a specific blockheight.
 
 for ENSNode, timetravel is not supported, so the Ponder indexer inside ENSNode should be run until the specified `endBlock` and then snapshotted with this tool. in the future this may be automated, but currently the tool just enforces this context and relies on the user to run the `ensnode` project in parallel.
+
+### Snapshot Archives
+
+Snapshots are available in our [releases](https://github.com/namehash/ens-subgraph-transition-tools/releases) if you'd like to download and diff them yourself.
+
+To do so, follow the following
+
+```bash
+# download ponder snapshot to snapshot-exports
+wget -P snapshot-exports <url/for/blockheight-ponder.zip>
+# download subgraph snapshot to snapshot-exports
+wget -P snapshot-exports <url/for/blockheight-subgraph.zip>
+
+# unzips to snapshots/[:blockheight]/ponder/
+bun snapshot-eq import 21000000 ponder
+
+# unzips to snapshots/[:blockheight]/subgraph/
+bun snapshot-eq import 21000000 subgraph
+
+# diff the two snapshots
+bun snapshot-eq diff 21000000
+```
 
 ## api equivalency tool (`api-eq`)
 

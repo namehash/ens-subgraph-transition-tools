@@ -175,4 +175,5 @@ dist
 .DS_Store
 
 # ignore snapshots folder for now
-tools/snapshot-eq/snapshots/
+snapshots/
+snapshot-archives/*.zip

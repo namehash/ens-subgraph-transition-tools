@@ -1,9 +1,9 @@
-import { resolve } from 'node:path'
+import { resolve } from "node:path";
 
 import type { Indexer } from "./types";
 
 // NOTE: don't love this, is there a better way to get to the root of the monorepo?
-const projectRootDir = resolve(__dirname, '../../..')
+const projectRootDir = resolve(__dirname, "../../..");
 
 export function makeSnapshotDirectoryPath({
 	blockheight,
@@ -13,6 +13,16 @@ export function makeSnapshotDirectoryPath({
 	indexer: Indexer;
 }) {
 	return resolve(projectRootDir, "snapshots", blockheight.toString(), indexer);
+}
+
+export function makeSnapshotArchivePath({
+	blockheight,
+	indexer,
+}: {
+	blockheight: number;
+	indexer: Indexer;
+}) {
+	return resolve(projectRootDir, "snapshot-archives", `${blockheight}-${indexer}.zip`);
 }
 
 export function makeSnapshotPath({
