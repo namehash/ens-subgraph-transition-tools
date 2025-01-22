@@ -6,7 +6,8 @@
     "packages/*"
   ],
   "scripts": {
-    "proxy:dev": "bun --filter=\"proxy-eq\" dev",
-    "snapshot:dev": "bun --filter=\"snapshot-eq\" dev"
+    "proxy:dev": "bun --filter proxy-eq dev",
+    "snapshot:dev": "bun --filter snapshot-eq dev",
+    "snapshot-eq": "bun --filter snapshot-eq --elide-lines 0 start"
   }
 }

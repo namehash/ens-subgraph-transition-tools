@@ -4,12 +4,8 @@ This project provides a suite of tools for verifying that [ENSNode](https://gith
 
 ### todo
 
-- [ ] resolver.addr (and therefore Domain.resolvedAddress) is null in many (but not all) cases
-  - seems that resolver factory events aren't being indexed, inc. the former public resolver `0x1da022710df5002339274aadee8d58218e9d6ab5`
-- [ ] enforce static order with `orderBy: id`, dependent on orderBy enum support in ENSNode
-- [ ] include snapshots, as git LFS or zip somewhere
-- [ ] add events top-level queries
-- [ ] configure tools index's as bin for simpler calling
+- [ ] after integrating label healing, submit new snapshots
+- [ ] add exhaustive events export to relevant entities
 
 ## snapshot equivalency tool (`snapshot-eq`)
 
@@ -19,14 +15,14 @@ configure via env variables or `.env.local` at root of project or inline
 - `PONDER_API_URL`
 - `SUBGRAPH_API_KEY`
 
-commands:
-- `bun run start -- --help`
-- `bun run start -- snapshot <blockheight> <ponder|subgraph>`
+commands, (run from the root of the project):
+- `bun snapshot-eq --help`
+- `bun snapshot-eq snapshot <blockheight> <ponder|subgraph>`
   - takes a 'snapshot' of the indexer at the provided blockheight by iterating over `n` collection queries
     - persists responses to `snapshots/[:blockheight]/[:indexer]/[:operationKey].json`
   - if ponder, code enforces that the indexer is ready at that blockheight
   - if subgraph, timetravel queries are used
-- `bun run start -- clean <blockheight> <ponder|subgraph>`
+- `bun snapshot-eq clean <blockheight> <ponder|subgraph>`
   - deletes the `snapshots/[:blockheight]/[:indexer]/` directory to bust the snapshot cache
 - `diff <blockheight>`
   - using subgraph responses as the source of truth, compares the snapshots at `snapshots/[:blockheight]/subgraph/*.json` wtih those at `snapshots/[:blockheight]/ponder/*.json` and prints the differences between them to assist with debugging
@@ -40,6 +36,28 @@ an `operationKey` is a [deterministic hash of a graphql document + variables](ht
 for the subgraph, [timetravel queries](https://thegraph.com/docs/en/subgraphs/querying/graphql-api/#time-travel-queries) are used to retrieve data at a specific blockheight.
 
 for ENSNode, timetravel is not supported, so the Ponder indexer inside ENSNode should be run until the specified `endBlock` and then snapshotted with this tool. in the future this may be automated, but currently the tool just enforces this context and relies on the user to run the `ensnode` project in parallel.
+
+### Snapshot Archives
+
+Snapshots are available in our [releases](https://github.com/namehash/ens-subgraph-transition-tools/releases) if you'd like to download and diff them yourself.
+
+To do so, follow the following
+
+```bash
+# download ponder snapshot to snapshot-exports
+wget -P snapshot-exports <url/for/blockheight-ponder.zip>
+# download subgraph snapshot to snapshot-exports
+wget -P snapshot-exports <url/for/blockheight-subgraph.zip>
+
+# unzips to snapshots/[:blockheight]/ponder/
+bun snapshot-eq import 21000000 ponder
+
+# unzips to snapshots/[:blockheight]/subgraph/
+bun snapshot-eq import 21000000 subgraph
+
+# diff the two snapshots
+bun snapshot-eq diff 21000000
+```
 
 ## api equivalency tool (`api-eq`)
 
