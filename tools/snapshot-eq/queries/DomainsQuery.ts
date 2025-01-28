@@ -35,8 +35,11 @@ export const DomainsQuery = gql`
             id
           }
         }
-        # NOTE: we ignore selecting resolver { id } on NewResolver events because of the bug in the
-        # subgraph described in handlers/Registry.ts
+        # NOTE: we ignore selecting resolver { id } on NewResolver events because there's a bug in
+        # the subgraph graphql typing (Resolver!) that is invalid at runtime (some NewResolver events
+        # include a primary key (resolverId = zeroAddress) for which there is no Resolver record).
+        # see ensnode's handlers/Registry.ts for a full discussion
+        #
         # ... on NewResolver {
         #   resolver {
         #     id
