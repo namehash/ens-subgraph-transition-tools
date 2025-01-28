@@ -11,6 +11,27 @@ export const RegistrationsQuery = gql`
       registrant { id }
       # TODO: add back once we have label healing
       # labelName
+
+      events {
+        __typename
+        id
+        blockNumber
+        transactionID
+        ... on NameRegistered {
+          registrant {
+            id
+          }
+          expiryDate
+        }
+        ... on NameRenewed {
+          expiryDate
+        }
+        ... on NameTransferred {
+          newOwner {
+            id
+          }
+        }
+      }
     }
   }
 `;
