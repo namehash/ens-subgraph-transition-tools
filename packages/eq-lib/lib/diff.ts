@@ -18,21 +18,7 @@ export type JsonDiff = {
 	>;
 };
 
-export function diffJson(
-	a: Record<string, Array<{ id: string }>>,
-	b: Record<string, Array<{ id: string }>>,
-): JsonDiff {
-	// Get the first (and only) key from each object
-	const [aKey] = Object.keys(a);
-	const [bKey] = Object.keys(b);
-
-	if (aKey !== bKey) {
-		throw new Error(`Mismatched collection keys: ${aKey} vs ${bKey}`);
-	}
-
-	const aArray = a[aKey];
-	const bArray = b[bKey];
-
+export function diffJson(aArray: Array<{ id: string }>, bArray: Array<{ id: string }>): JsonDiff {
 	if (deepEqual(aArray, bArray)) return { equal: true };
 
 	const diffs: Required<JsonDiff>["diffs"] = {};
@@ -91,7 +77,6 @@ export function diffJson(
 
 	return {
 		equal: Object.keys(diffs).length === 0 && missing.length === 0 && unexpected.length === 0,
-		key: aKey,
 		missing,
 		unexpected,
 		diffs,
