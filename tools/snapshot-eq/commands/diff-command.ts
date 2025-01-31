@@ -8,7 +8,7 @@ import { diffJson } from "eq-lib";
 // helpful to ignore specific operationKeys to progress the diff
 const IGNORE_OPERATION_KEYS: string[] = [];
 
-function filterResultsBy(result: ReturnType<typeof diffJson>, match: RegExp) {
+function filterDiffsBy(result: ReturnType<typeof diffJson>, match: RegExp) {
 	const filtered = Object.fromEntries(
 		Object.entries(result.diffs).filter(([path]) => path.match(match) === null),
 	);
@@ -59,12 +59,14 @@ export async function diffCommand(blockheight: number) {
 
 		const ponderSnapshot = await Bun.file(ponderSnapshotPath).json();
 
+		console.log(JSON.stringify(ponderSnapshot));
+
 		// they both exist, let's diff them
 		const result = await diffJson(subgraphSnapshot, ponderSnapshot);
 		if (result.equal) continue;
 
-		const filtered = result;
-		// const filtered = filterResultsBy(result, /\.events\./);
+		// const filtered = result;
+		const filtered = filterDiffsBy(result, /\.events\.\d+\.value/);
 
 		// they're equal, huzzah
 		if (filtered.equal) continue;

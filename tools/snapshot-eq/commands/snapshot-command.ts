@@ -3,7 +3,7 @@ import { makeClient } from "eq-lib";
 import PQueue from "p-queue";
 import ProgressBar from "progress";
 
-import { getFirstFieldName, getFirstOperationName, makeSubgraphUrl } from "@/lib/helpers";
+import { getFirstOperationName, makeSubgraphUrl } from "@/lib/helpers";
 import { hasSnapshot, makeSnapshotPath, persistSnapshot } from "@/lib/snapshots";
 import { print } from "graphql";
 
@@ -30,12 +30,6 @@ const BATCH_SIZE = 1000;
 type PageVariables = { first: number; skip: number };
 
 async function fetchItems(client: Client, document: TypedDocumentNode, variables: PageVariables) {
-	const fieldName = getFirstFieldName(document);
-	if (!fieldName) {
-		console.log(print(document));
-		throw new Error("Unexpected collection query format, unable to extract fieldName");
-	}
-
 	const { data, error } = await client.query(document, variables);
 
 	// if we recieved an error, surface and bail
@@ -49,7 +43,7 @@ async function fetchItems(client: Client, document: TypedDocumentNode, variables
 		throw new Error("Received empty data");
 	}
 
-	return data[fieldName] as unknown[];
+	return data.items as unknown[];
 }
 
 async function idempotentFetchItems(
