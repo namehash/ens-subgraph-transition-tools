@@ -2,7 +2,7 @@ import { gql } from "@urql/core";
 
 export const DomainsQuery = gql`
   query Domains($first: Int!, $skip: Int!) {
-    domains(first: $first, skip: $skip) {
+    items: domains(first: $first, skip: $skip) {
       id
       # TODO: re-enable name and labelName once label healing is integrated into ponder
       # name
