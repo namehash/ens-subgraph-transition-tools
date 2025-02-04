@@ -52,21 +52,18 @@ export async function diffCommand(blockheight: number) {
 
 		const exists = await Bun.file(ponderSnapshotPath).exists();
 		if (!exists) {
-			// throw new Error(`Ponder(${blockheight}) does not have '${operationKey}.json'`);
 			console.error(`Ponder(${blockheight}) does not have '${operationKey}.json'`);
 			continue;
 		}
 
 		const ponderSnapshot = await Bun.file(ponderSnapshotPath).json();
 
-		console.log(JSON.stringify(ponderSnapshot));
-
 		// they both exist, let's diff them
 		const result = await diffJson(subgraphSnapshot, ponderSnapshot);
 		if (result.equal) continue;
 
-		// const filtered = result;
-		const filtered = filterDiffsBy(result, /\.events\.\d+\.value/);
+		const filtered = result;
+		// const filtered = filterDiffsBy(result, /\.events\.\d+\.value/);
 
 		// they're equal, huzzah
 		if (filtered.equal) continue;
