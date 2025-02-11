@@ -12,7 +12,7 @@ This project provides a suite of tools for verifying that [ENSNode](https://gith
 > this tool appoximates a database dump & diff, but via the graphql api. it iterates over relevant top-level collection queries, paginating over all records compares their responses to highlight discrepancies.
 
 configure via env variables or `.env.local` at root of project or inline
-- `PONDER_API_URL`
+- `ENSNODE_API_URL` — ex: `http://localhost:42069`
 - `SUBGRAPH_API_KEY`
 
 commands, (run from the root of the project):

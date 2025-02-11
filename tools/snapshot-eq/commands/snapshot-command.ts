@@ -133,15 +133,15 @@ export async function snapshotCommand(blockheight: number, indexer: Indexer) {
 	const url =
 		indexer === Indexer.Ponder
 			? // biome-ignore lint/style/noNonNullAssertion: convenience
-				Bun.env.PONDER_API_URL!
+				`${Bun.env.ENSNODE_URL!}/subgraph`
 			: // biome-ignore lint/style/noNonNullAssertion: convenience
 				makeSubgraphUrl(Bun.env.SUBGRAPH_API_KEY!);
 
-	const client = makeClient(url);
-
 	// if ponder, confirm that indexer is at the specific blockneight and is ready
 	if (indexer === Indexer.Ponder) {
-		const { data } = await client.query(PonderMeta);
+		// biome-ignore lint/style/noNonNullAssertion: convenience
+		const ponderApiClient = makeClient(Bun.env.ENSNODE_URL!);
+		const { data } = await ponderApiClient.query(PonderMeta);
 		// NOTE: hardcodes mainnet
 		const {
 			ready,
@@ -156,6 +156,8 @@ export async function snapshotCommand(blockheight: number, indexer: Indexer) {
 			throw new Error(`Ponder is at ${ponderBlockheight}, ${blockheight} requeted.`);
 		}
 	}
+
+	const client = makeClient(url);
 
 	for (const [document, totalCountDocument] of ALL_QUERIES) {
 		const operationName = getFirstOperationName(document);
