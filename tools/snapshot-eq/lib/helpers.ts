@@ -9,3 +9,13 @@ export function getFirstOperationName(document: TypedDocumentNode) {
 		document.definitions.find((def) => def.kind === "OperationDefinition")?.name?.value ?? "Unknown"
 	);
 }
+
+export function getEnsnodeUrl() {
+	if (!Bun.env.ENSNODE_URL) throw new Error("ENSNODE_URL required, see documentation.");
+	return Bun.env.ENSNODE_URL;
+}
+
+export function getSubgraphApiKey() {
+	if (!Bun.env.SUBGRAPH_API_KEY) throw new Error("SUBGRAPH_API_KEY required, see documentation.");
+	return Bun.env.SUBGRAPH_API_KEY;
+}

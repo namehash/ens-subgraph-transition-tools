@@ -5,7 +5,6 @@ This project provides a suite of tools for verifying that [ENSNode](https://gith
 ### todo
 
 - [ ] after integrating label healing, submit new snapshots
-- [ ] add exhaustive events export to relevant entities
 
 ## snapshot equivalency tool (`snapshot-eq`)
 
@@ -13,7 +12,9 @@ This project provides a suite of tools for verifying that [ENSNode](https://gith
 
 configure via env variables or `.env.local` at root of project or inline
 - `ENSNODE_API_URL` — ex: `http://localhost:42069`
+  - must be an ENSNode instance that provies a ponder-native api endpoint at `/` and a subgraph-compatible endpoint at `/subgraph`
 - `SUBGRAPH_API_KEY`
+  - https://thegraph.com/studio/apikeys
 
 commands, (run from the root of the project):
 - `bun snapshot-eq --help`
