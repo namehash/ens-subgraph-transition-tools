@@ -3,7 +3,12 @@ import { makeClient } from "eq-lib";
 import PQueue from "p-queue";
 import ProgressBar from "progress";
 
-import { getFirstOperationName, makeSubgraphUrl } from "@/lib/helpers";
+import {
+	getEnsnodeUrl,
+	getFirstOperationName,
+	getSubgraphApiKey,
+	makeSubgraphUrl,
+} from "@/lib/helpers";
 import { hasSnapshot, makeSnapshotPath, persistSnapshot } from "@/lib/snapshots";
 import { print } from "graphql";
 
@@ -132,16 +137,13 @@ const ALL_QUERIES: [TypedDocumentNode, TypedDocumentNode][] = [
 export async function snapshotCommand(blockheight: number, indexer: Indexer) {
 	const url =
 		indexer === Indexer.Ponder
-			? // biome-ignore lint/style/noNonNullAssertion: convenience
-				Bun.env.PONDER_API_URL!
-			: // biome-ignore lint/style/noNonNullAssertion: convenience
-				makeSubgraphUrl(Bun.env.SUBGRAPH_API_KEY!);
-
-	const client = makeClient(url);
+			? `${getEnsnodeUrl()}/subgraph`
+			: makeSubgraphUrl(getSubgraphApiKey());
 
 	// if ponder, confirm that indexer is at the specific blockneight and is ready
 	if (indexer === Indexer.Ponder) {
-		const { data } = await client.query(PonderMeta);
+		const ponderApiClient = makeClient(getEnsnodeUrl());
+		const { data } = await ponderApiClient.query(PonderMeta);
 		// NOTE: hardcodes mainnet
 		const {
 			ready,
@@ -156,6 +158,8 @@ export async function snapshotCommand(blockheight: number, indexer: Indexer) {
 			throw new Error(`Ponder is at ${ponderBlockheight}, ${blockheight} requeted.`);
 		}
 	}
+
+	const client = makeClient(url);
 
 	for (const [document, totalCountDocument] of ALL_QUERIES) {
 		const operationName = getFirstOperationName(document);

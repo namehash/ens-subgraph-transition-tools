@@ -9,8 +9,7 @@ export const RegistrationsQuery = gql`
       expiryDate
       cost
       registrant { id }
-      # TODO: add back once we have label healing
-      # labelName
+      labelName
 
       events {
         __typename

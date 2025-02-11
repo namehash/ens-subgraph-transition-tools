@@ -4,9 +4,8 @@ export const DomainsQuery = gql`
   query Domains($first: Int!, $skip: Int!) {
     items: domains(first: $first, skip: $skip) {
       id
-      # TODO: re-enable name and labelName once label healing is integrated into ponder
-      # name
-      # labelName
+      name
+      labelName
       labelhash
       parent { id }
       subdomainCount
