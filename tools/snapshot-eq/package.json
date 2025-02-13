@@ -1,24 +1,27 @@
 {
-  "name": "snapshot-eq",
-  "private": true,
-  "module": "index.ts",
-  "type": "module",
-  "scripts": {
-    "start": "bun run --env-file ../../.env.local index.ts",
-    "dev": "bun run --env-file ../../.env.local --watch index.ts"
-  },
-  "dependencies": {
-    "@jsonjoy.com/util": "^1.5.0",
-    "@urql/core": "^5.1.0",
-    "eq-lib": "workspace:*",
-    "graphql": "^16.10.0",
-    "yargs": "^17.7.2"
-  },
-  "devDependencies": {
-    "@types/bun": "latest",
-    "@types/yargs": "^17.0.33"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  }
+	"name": "snapshot-eq",
+	"private": true,
+	"module": "index.ts",
+	"type": "module",
+	"scripts": {
+		"start": "bun run --env-file ../../.env.local index.ts",
+		"dev": "bun run --env-file ../../.env.local --watch index.ts"
+	},
+	"dependencies": {
+		"@jsonjoy.com/util": "^1.5.0",
+		"@urql/core": "^5.1.0",
+		"eq-lib": "workspace:*",
+		"graphql": "^16.10.0",
+		"yargs": "^17.7.2",
+		"p-queue": "^8.1.0",
+		"progress": "^2.0.3"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@types/progress": "^2.0.7",
+		"@types/yargs": "^17.0.33"
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	}
 }
