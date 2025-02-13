@@ -2,10 +2,6 @@
 
 This project provides a suite of tools for verifying that [ENSNode](https://github.com/namehash/ensnode) is a reliable replacement for the ENS Subgraph when performing subgraph queries through `ensjs`.
 
-### todo
-
-- [ ] after integrating label healing, submit new snapshots
-
 ## snapshot equivalency tool (`snapshot-eq`)
 
 > this tool appoximates a database dump & diff, but via the graphql api. it iterates over relevant top-level collection queries, paginating over all records compares their responses to highlight discrepancies.
