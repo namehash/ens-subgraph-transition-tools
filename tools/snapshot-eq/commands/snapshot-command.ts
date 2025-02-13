@@ -37,15 +37,11 @@ type PageVariables = { first: number; skip: number };
 async function fetchItems(client: Client, document: TypedDocumentNode, variables: PageVariables) {
 	const { data, error } = await client.query(document, variables);
 
-	// if we recieved an error, surface and bail
-	if (error) {
+	// if we recieved an error or no data, surface and bail
+	if (error || !data) {
+		console.error(JSON.stringify(variables));
 		console.error(print(document));
-		throw error;
-	}
-
-	if (!data) {
-		console.error(print(document));
-		throw new Error("Received empty data");
+		throw error || new Error("Received empty data");
 	}
 
 	return data.items as unknown[];
@@ -148,7 +144,7 @@ export async function snapshotCommand(blockheight: number, indexer: Indexer) {
 		const {
 			ready,
 			block: { number: ponderBlockheight },
-		} = data._meta.status.mainnet;
+		} = data._meta.status["1"];
 
 		if (!ready) {
 			throw new Error("Ponder is not _meta.status.mainnet.ready");
