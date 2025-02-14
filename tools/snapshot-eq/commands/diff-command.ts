@@ -8,17 +8,8 @@ import { diffJson } from "eq-lib";
 // helpful to ignore specific operationKeys to progress the diff
 const IGNORE_OPERATION_KEYS: string[] = [];
 
-function filterDiffsBy(result: ReturnType<typeof diffJson>, match: RegExp) {
-	const filtered = Object.fromEntries(
-		Object.entries(result.diffs).filter(([path]) => path.match(match) === null),
-	);
-	const equal = Object.keys(filtered).length === 0;
-
-	return {
-		...result,
-		equal,
-		diffs: filtered,
-	};
+function ignoreChangesetsByPath(changesets: { path: string }[], matches: RegExp[]) {
+	return changesets.filter(({ path }) => !matches.some((match) => path.match(match)));
 }
 
 export async function diffCommand(blockheight: number) {
@@ -59,14 +50,14 @@ export async function diffCommand(blockheight: number) {
 		const ponderSnapshot = await Bun.file(ponderSnapshotPath).json();
 
 		// they both exist, let's diff them
-		const result = await diffJson(subgraphSnapshot, ponderSnapshot);
-		if (result.equal) continue;
+		const changeset = await diffJson(subgraphSnapshot, ponderSnapshot);
 
-		const filtered = result;
-		// const filtered = filterDiffsBy(result, /\.events\.\d+\.value/);
+		// if you'd like, manually add RegExp[] here to ignore changesets by path, which is
+		// helpful for manually continuing the diff job once a difference has been identified
+		const filtered = ignoreChangesetsByPath(changeset, []);
 
 		// they're equal, huzzah
-		if (filtered.equal) continue;
+		if (filtered.length === 0) continue;
 
 		// otherwise, print and throw
 		console.error(JSON.stringify(filtered, null, 2));

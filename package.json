@@ -1,20 +1,13 @@
 {
-  "name": "ens-subgraph-transition-tools",
-  "private": true,
-  "workspaces": [
-    "tools/*",
-    "packages/*"
-  ],
-  "scripts": {
-    "proxy:dev": "bun --filter proxy-eq dev",
-    "snapshot:dev": "bun --filter snapshot-eq dev",
-    "snapshot-eq": "bun --filter snapshot-eq --elide-lines 0 start"
-  },
-  "dependencies": {
-    "p-queue": "^8.1.0",
-    "progress": "^2.0.3"
-  },
-  "devDependencies": {
-    "@types/progress": "^2.0.7"
-  }
+	"name": "ens-subgraph-transition-tools",
+	"private": true,
+	"scripts": {
+		"lint": "biome check --write .",
+		"proxy:dev": "bun --filter proxy-eq dev",
+		"snapshot:dev": "bun --filter snapshot-eq dev",
+		"snapshot-eq": "bun --filter snapshot-eq --elide-lines 0 start"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4"
+	}
 }
