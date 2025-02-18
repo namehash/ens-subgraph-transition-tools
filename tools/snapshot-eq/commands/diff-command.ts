@@ -49,8 +49,20 @@ export async function diffCommand(blockheight: number) {
 
 		const ponderSnapshot = await Bun.file(ponderSnapshotPath).json();
 
+		console.log(`Diff(${operationKey}.json)`);
+
 		// they both exist, let's diff them
-		const changeset = await diffJson(subgraphSnapshot, ponderSnapshot);
+		let changeset: Awaited<ReturnType<typeof diffJson>>;
+		try {
+			changeset = await diffJson(subgraphSnapshot, ponderSnapshot);
+		} catch (error) {
+			// an error here means that the diffJson lib failed, meaning they're definitely not equal
+			console.error(
+				`Difference Found in operationKey ${operationKey}.json (likely missing object sub-field in ponder snapshot)`,
+			);
+			continue;
+			// process.exit(1);
+		}
 
 		// if you'd like, manually add RegExp[] here to ignore changesets by path, which is
 		// helpful for manually continuing the diff job once a difference has been identified
