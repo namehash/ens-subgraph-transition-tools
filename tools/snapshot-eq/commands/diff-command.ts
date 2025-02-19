@@ -60,8 +60,7 @@ export async function diffCommand(blockheight: number) {
 			console.error(
 				`Difference Found in operationKey ${operationKey}.json (likely missing object sub-field in ponder snapshot)`,
 			);
-			continue;
-			// process.exit(1);
+			process.exit(1);
 		}
 
 		// if you'd like, manually add RegExp[] here to ignore changesets by path, which is
