@@ -8,7 +8,7 @@ import { diffJson } from "eq-lib";
 // helpful to ignore specific operationKeys to progress the diff
 const IGNORE_OPERATION_KEYS: string[] = [];
 
-function ignoreChangesetsByPath(changesets: { path: string }[], matches: RegExp[]) {
+function ignoreChangesetsByPath<T extends { path: string }>(changesets: T[], matches: RegExp[]) {
 	return changesets.filter(({ path }) => !matches.some((match) => path.match(match)));
 }
 
@@ -52,7 +52,8 @@ export async function diffCommand(blockheight: number) {
 		console.log(`Diff(${operationKey}.json)`);
 
 		// they both exist, let's diff them
-		let changeset: Awaited<ReturnType<typeof diffJson>>;
+		// TODO: why no inferred types??
+		let changeset: { type: string; path: string }[];
 		try {
 			changeset = await diffJson(subgraphSnapshot, ponderSnapshot);
 		} catch (error) {
