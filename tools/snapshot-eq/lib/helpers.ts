@@ -1,5 +1,7 @@
 import type { TypedDocumentNode } from "@urql/core";
 
+// https://api.studio.thegraph.com/query/49574/enssepolia/version/latest/graphql
+// https://api.studio.thegraph.com/query/49574/ensholesky/version/latest/graphql
 export const makeSubgraphUrl = (apiKey: string) =>
 	`https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/5XqPmWe6gjyrJtFn9cLy237i4cWw2j9HcUJEXsP5qGtH`;
 
