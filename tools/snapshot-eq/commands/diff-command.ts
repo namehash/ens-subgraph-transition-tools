@@ -12,6 +12,10 @@ function ignoreChangesetsByPath<T extends { path: string }>(changesets: T[], mat
 	return changesets.filter(({ path }) => !matches.some((match) => path.match(match)));
 }
 
+function ignoreChangesetsByType<T extends { type: string }>(changesets: T[], types: string[]) {
+	return changesets.filter(({ type }) => !types.includes(type));
+}
+
 export async function diffCommand(blockheight: number) {
 	const subgraphSnapshotDirectory = makeSnapshotDirectoryPath({
 		blockheight,
@@ -66,7 +70,8 @@ export async function diffCommand(blockheight: number) {
 
 		// if you'd like, manually add RegExp[] here to ignore changesets by path, which is
 		// helpful for manually continuing the diff job once a difference has been identified
-		const filtered = ignoreChangesetsByPath(changeset, []);
+		const filteredByPath = ignoreChangesetsByPath(changeset, []);
+		const filtered = ignoreChangesetsByType(filteredByPath, []);
 
 		// they're equal, huzzah
 		if (filtered.length === 0) continue;
