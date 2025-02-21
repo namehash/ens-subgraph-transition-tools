@@ -17,6 +17,8 @@ export const DomainsQuery = gql`
       owner { id }
       registrant { id }
       wrappedOwner { id }
+      registration { id }
+      wrappedDomain { id }
       expiryDate
 
       events {
