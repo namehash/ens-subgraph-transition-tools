@@ -1,12 +1,25 @@
 import { Indexer } from "@/lib/types";
 
-import { parse } from "node:path";
-import { makeSnapshotDirectoryPath, makeSnapshotPath } from "@/lib/snapshots";
+import { resolve } from "node:path";
+import { getFirstOperationName } from "@/lib/helpers";
+import { getSnapshot, makeSnapshotDirectoryPath } from "@/lib/snapshots";
+import { ALL_QUERIES } from "@/queries";
 import { Glob } from "bun";
-import { diffJson } from "eq-lib";
+import { atomizeChangeset, diff } from "json-diff-ts";
+import ProgressBar from "progress";
 
-// helpful to ignore specific operationKeys to progress the diff
-const IGNORE_OPERATION_KEYS: string[] = [];
+// biome-ignore lint/suspicious/noExplicitAny: honestly easiest type
+function diffSnapshots(a: any, b: any) {
+	const diffs = diff(a, b, {
+		treatTypeChangeAsReplace: false,
+		embeddedObjKeys: {
+			items: "id",
+			events: "id",
+		},
+	});
+
+	return atomizeChangeset(diffs);
+}
 
 function ignoreChangesetsByPath<T extends { path: string }>(changesets: T[], matches: RegExp[]) {
 	return changesets.filter(({ path }) => !matches.some((match) => path.match(match)));
@@ -16,70 +29,97 @@ function ignoreChangesetsByType<T extends { type: string }>(changesets: T[], typ
 	return changesets.filter(({ type }) => !types.includes(type));
 }
 
-export async function diffCommand(blockheight: number) {
+async function diffOperationName(operationName: string, blockheight: number) {
 	const subgraphSnapshotDirectory = makeSnapshotDirectoryPath({
 		blockheight,
 		indexer: Indexer.Subgraph,
 	});
 
-	const subgraphSnapshots = new Glob("*.json").scan(subgraphSnapshotDirectory);
+	const ponderSnapshotDirectory = makeSnapshotDirectoryPath({
+		blockheight,
+		indexer: Indexer.Ponder,
+	});
+
+	const subgraphSnapshots = [...new Glob("*.json").scanSync(subgraphSnapshotDirectory)].filter(
+		(name) => name.startsWith(operationName),
+	);
+
+	const bar = new ProgressBar(
+		`${operationName} [:bar] :current/:total snapshots (:percent) - :rate snapshots/sec - :etas remaining (:snapshotFileName)`,
+		{
+			complete: "=",
+			incomplete: " ",
+			width: 40,
+			total: subgraphSnapshots.length,
+		},
+	);
 
 	for await (const snapshotFileName of subgraphSnapshots) {
-		const operationKey = parse(snapshotFileName).name;
-
-		if (IGNORE_OPERATION_KEYS.includes(operationKey)) continue;
-
 		// subgraph snapshot guaranteed to exist
-		const subgraphSnapshot = await Bun.file(
-			makeSnapshotPath({
-				blockheight,
-				indexer: Indexer.Subgraph,
-				operationKey,
-			}),
-		).json();
+		const subgraphSnapshot = await getSnapshot(
+			resolve(subgraphSnapshotDirectory, snapshotFileName),
+		);
 
 		// ponder snapshot not guaranteed
-		const ponderSnapshotPath = makeSnapshotPath({
-			blockheight,
-			indexer: Indexer.Ponder,
-			operationKey,
-		});
-
+		const ponderSnapshotPath = resolve(ponderSnapshotDirectory, snapshotFileName);
 		const exists = await Bun.file(ponderSnapshotPath).exists();
 		if (!exists) {
-			console.error(`Ponder(${blockheight}) does not have '${operationKey}.json'`);
-			continue;
+			console.error(`Ponder(${blockheight}) does not have '${snapshotFileName}'.`);
+			process.exit(1);
 		}
 
 		const ponderSnapshot = await Bun.file(ponderSnapshotPath).json();
 
-		console.log(`Diff(${operationKey}.json)`);
-
 		// they both exist, let's diff them
 		// TODO: why no inferred types??
-		let changeset: { type: string; path: string }[];
+		let changeset: ReturnType<typeof diffSnapshots>;
 		try {
-			changeset = await diffJson(subgraphSnapshot, ponderSnapshot);
+			changeset = diffSnapshots(subgraphSnapshot, ponderSnapshot);
 		} catch (error) {
-			// an error here means that the diffJson lib failed, meaning they're definitely not equal
+			// an error here means that the diffJson lib failed, so they're definitely not equal
 			console.error(
-				`Difference Found in operationKey ${operationKey}.json (likely missing object sub-field in ponder snapshot)`,
+				`Difference found in ${snapshotFileName} (likely missing object sub-field in ponder snapshot)`,
 			);
 			process.exit(1);
 		}
 
+		///
+		/// Changeset Filters
+		///
+
+		// helpful to ignore specific snapshot file names to progress the diff
+		const IGNORE_FILENAMES: string[] = [];
+		const filteredByFilename = changeset.filter(() => !IGNORE_FILENAMES.includes(snapshotFileName));
+
 		// if you'd like, manually add RegExp[] here to ignore changesets by path, which is
-		// helpful for manually continuing the diff job once a difference has been identified
-		const filteredByPath = ignoreChangesetsByPath(changeset, []);
+		// helpful for manually continuing the diff job once a pattern has been identified
+		// i.e. ignore all diffs related to a Domain.wrappedDomain.id: /\.wrappedDomain\.id$/
+		const filteredByPath = ignoreChangesetsByPath(filteredByFilename, []);
+
+		// if you'd like, ignore changesets by 'type', helpful for ignoring out-of-order entities
 		const filtered = ignoreChangesetsByType(filteredByPath, []);
 
+		///
+		/// end changeset filterd
+		///
+
 		// they're equal, huzzah
-		if (filtered.length === 0) continue;
+		if (filtered.length === 0) {
+			bar.tick(1, { snapshotFileName });
+			continue;
+		}
 
 		// otherwise, print and throw
 		console.error(JSON.stringify(filtered, null, 2));
-		console.error(`Difference Found in operationKey ${operationKey}.json`);
+		console.error(`Difference found in ${snapshotFileName}`);
 		process.exit(1);
+	}
+}
+
+export async function diffCommand(blockheight: number) {
+	for (const [document] of ALL_QUERIES) {
+		const operationName = getFirstOperationName(document);
+		await diffOperationName(operationName, blockheight);
 	}
 
 	console.log(`Diff(${blockheight}) — snapshots are identical.`);
