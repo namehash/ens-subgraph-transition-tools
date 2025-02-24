@@ -56,9 +56,8 @@ async function diffOperationName(operationName: string, blockheight: number) {
 
 	for await (const snapshotFileName of subgraphSnapshots) {
 		// subgraph snapshot guaranteed to exist
-		const subgraphSnapshot = await getSnapshot(
-			resolve(subgraphSnapshotDirectory, snapshotFileName),
-		);
+		const subgraphSnapshotPath = resolve(subgraphSnapshotDirectory, snapshotFileName);
+		const subgraphSnapshot = await getSnapshot(subgraphSnapshotPath);
 
 		// ponder snapshot not guaranteed
 		const ponderSnapshotPath = resolve(ponderSnapshotDirectory, snapshotFileName);
@@ -81,6 +80,19 @@ async function diffOperationName(operationName: string, blockheight: number) {
 				`Difference found in ${snapshotFileName} (likely missing object sub-field in ponder snapshot)`,
 			);
 			process.exit(1);
+		}
+
+		// the subgraph is having a hard time with event ids for some reason where,
+		// intermittently, the event ids returned by the subgraph are off-by-one.
+		// in that case we want to delete the snapshot to progress the diff and instruct the user
+		// to re-snapshot the subgraph to pull the hopefully correct information down instead.
+		if (changeset.some((cs) => cs.path.match(/\.events\[\d+\]\.id$/) !== null)) {
+			// has event id mismatch
+			await Bun.file(subgraphSnapshotPath).delete();
+			bar.interrupt(
+				`Deleted ${snapshotFileName} because of event id mismatch — make sure to re-snapshot the subgraph.`,
+			);
+			continue;
 		}
 
 		///
