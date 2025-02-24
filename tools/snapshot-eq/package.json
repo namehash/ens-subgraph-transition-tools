@@ -12,9 +12,10 @@
 		"@urql/core": "^5.1.0",
 		"eq-lib": "workspace:*",
 		"graphql": "^16.10.0",
-		"yargs": "^17.7.2",
+		"json-diff-ts": "^4.1.0",
 		"p-queue": "^8.1.0",
-		"progress": "^2.0.3"
+		"progress": "^2.0.3",
+		"yargs": "^17.7.2"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",

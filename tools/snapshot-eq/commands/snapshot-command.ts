@@ -15,19 +15,8 @@ import { print } from "graphql";
 import { getTotalCount } from "@/lib/get-total-count";
 import { injectSubgraphBlockHeightArgument } from "@/lib/subgraph-ops";
 import { Indexer } from "@/lib/types";
-import { AccountsQuery } from "@/queries/AccountsQuery";
-import { DomainsQuery } from "@/queries/DomainsQuery";
+import { ALL_QUERIES } from "@/queries";
 import { PonderMeta } from "@/queries/PonderMeta";
-import { RegistrationsQuery } from "@/queries/RegistrationsQuery";
-import { ResolversQuery } from "@/queries/ResolversQuery";
-import {
-	AccountsTotalCountQuery,
-	DomainsTotalCountQuery,
-	RegistrationsTotalCountQuery,
-	ResolversTotalCountQuery,
-	WrappedDomainsTotalCountQuery,
-} from "@/queries/TotalCountQueries";
-import { WrappedDomainsQuery } from "@/queries/WrappedDomainsQuery";
 
 // subgraph (& ponder) have hard limit of 1000 for plural field `first`
 const BATCH_SIZE = 1000;
@@ -47,32 +36,20 @@ async function fetchItems(client: Client, document: TypedDocumentNode, variables
 	return data.items as unknown[];
 }
 
-async function idempotentFetchItems(
+async function fetchItemsAtBlockheight(
 	indexer: Indexer,
 	client: Client,
-	query: TypedDocumentNode,
+	document: TypedDocumentNode,
 	variables: PageVariables,
 	blockheight: number,
 ) {
-	// NOTE: always derive the operation key from the un-altered query
-	const operationKey = createRequest(query, variables).key.toString();
-
-	const snapshotPath = makeSnapshotPath({ blockheight, indexer, operationKey });
-
-	// skip any requests that have already been fetched & persisted
-	const _hasSnapshot = await hasSnapshot(snapshotPath);
-	if (_hasSnapshot) return;
-
 	const documentWithBlockheight =
 		indexer === Indexer.Subgraph //
-			? injectSubgraphBlockHeightArgument(query, blockheight) // inject blockheight if subgraph
-			: query; // ponder uses query as-is
+			? injectSubgraphBlockHeightArgument(document, blockheight) // inject blockheight if subgraph
+			: document; // ponder uses query as-is
 
 	// fetch items
-	const items = await fetchItems(client, documentWithBlockheight, variables);
-
-	// persist snapshot
-	await persistSnapshot(snapshotPath, JSON.stringify(items));
+	return await fetchItems(client, documentWithBlockheight, variables);
 }
 
 async function paginateParallel(
@@ -85,6 +62,8 @@ async function paginateParallel(
 	// cannot paginate over 0 records
 	if (numRecords === 0) return;
 
+	const operationName = getFirstOperationName(query);
+
 	// TODO: integrate AbortController (?)
 	const queue = new PQueue({
 		// subgraph is distributed, so parallelize, ponder is single-instance bound by postgres
@@ -92,43 +71,77 @@ async function paginateParallel(
 	});
 
 	const totalPages = Math.ceil(numRecords / BATCH_SIZE);
-	const offsets = Array.from({ length: totalPages }, (_, i) => i * BATCH_SIZE);
 
-	const operationName = getFirstOperationName(query);
+	// construct set of page descriptors
+	const pages = Array.from({ length: totalPages }, (_, i) => i * BATCH_SIZE) //
+		.map((offset) => {
+			const variables = { first: BATCH_SIZE, skip: offset };
+			// NOTE: always derive the operation key from the un-altered query
+			const operationKey = createRequest(query, variables).key.toString();
+
+			return {
+				variables,
+				operationKey,
+				snapshotPath: makeSnapshotPath({
+					blockheight,
+					indexer,
+					operationName,
+					offset,
+					operationKey,
+				}),
+			};
+		});
+
+	// fetch snapshot presence on disk
+	const isPagePersisted = await Promise.all(
+		pages.map(({ snapshotPath }) => hasSnapshot(snapshotPath)),
+	);
+
+	// skip any requests that have already been fetched & persisted
+	const pagesToFetch = pages.filter((_, i) => !isPagePersisted[i]);
+
+	const skippedPagesCount = pages.length - pagesToFetch.length;
+
+	if (skippedPagesCount) console.log(`Skipping ${skippedPagesCount} persisted pages.`);
+
 	const bar = new ProgressBar(
 		`${operationName} [:bar] :current/:total items (:percent) - :rate items/sec - :etas remaining`,
 		{
 			complete: "=",
 			incomplete: " ",
 			width: 40,
-			total: numRecords,
+			total: pagesToFetch.length * BATCH_SIZE,
 		},
 	);
 
-	bar.tick(0);
-
 	// add all pages to queue and await
 	await queue.addAll(
-		offsets.map((offset) => async () => {
-			await idempotentFetchItems(
+		pagesToFetch.map((page) => async () => {
+			// fetch items at blockheight
+			const items = await fetchItemsAtBlockheight(
 				indexer,
 				client,
 				query,
-				{ first: BATCH_SIZE, skip: offset },
+				page.variables,
 				blockheight,
 			);
+
+			// persist snapshot
+			await persistSnapshot(
+				page.snapshotPath,
+				JSON.stringify({
+					operationName,
+					operationKey: page.operationKey,
+					variables: page.variables,
+					items,
+				}),
+			);
+
+			// update progress by batch
 			bar.tick(BATCH_SIZE);
 		}),
 	);
 }
-
-const ALL_QUERIES: [TypedDocumentNode, TypedDocumentNode][] = [
-	[DomainsQuery, DomainsTotalCountQuery],
-	[AccountsQuery, AccountsTotalCountQuery],
-	[ResolversQuery, ResolversTotalCountQuery],
-	[RegistrationsQuery, RegistrationsTotalCountQuery],
-	[WrappedDomainsQuery, WrappedDomainsTotalCountQuery],
-];
 
 export async function snapshotCommand(blockheight: number, indexer: Indexer) {
 	const url =
