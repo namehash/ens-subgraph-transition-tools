@@ -151,7 +151,7 @@ export async function snapshotCommand(blockheight: number, indexer: Indexer) {
 
 	// if ponder, confirm that indexer is at the specific blockneight and is ready
 	if (indexer === Indexer.Ponder) {
-		const ponderApiClient = makeClient(getEnsnodeUrl());
+		const ponderApiClient = makeClient(`${getEnsnodeUrl()}/ponder`);
 		const { data } = await ponderApiClient.query(PonderMeta);
 		// NOTE: hardcodes mainnet
 		const {
