@@ -8,7 +8,7 @@ export const makeSubgraphUrl = (deploymentChain: ENSDeploymentChain, apiKey: str
 		case "sepolia":
 			return `https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/DmMXLtMZnGbQXASJ7p1jfzLUbBYnYUD9zNBTxpkjHYXV`;
 		case "holesky":
-			return "https://api.studio.thegraph.com/query/49574/ensholesky/version/latest";
+			return `https://api.studio.thegraph.com/query/49574/ensholesky/version/latest?api_key=${apiKey}`;
 		default:
 			throw new Error(`Unsupported --deployment: ${deploymentChain}`);
 	}

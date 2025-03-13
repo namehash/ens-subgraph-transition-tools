@@ -173,7 +173,3 @@ dist
 
 # Finder (MacOS) folder config
 .DS_Store
-
-# ignore snapshots folder for now
-snapshots/
-snapshot-archives/*.zip
