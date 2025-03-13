@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 
+import type { ENSDeploymentChain } from "@ensnode/ens-deployments";
 import type { Indexer } from "./types";
 
 // NOTE: don't love this, is there a better way to get to the root of the monorepo?
@@ -15,13 +16,15 @@ export interface Snapshot {
 }
 
 export function makeSnapshotDirectoryPath({
+	deploymentChain,
 	blockheight,
 	indexer,
 }: {
+	deploymentChain: ENSDeploymentChain;
 	blockheight: number;
 	indexer: Indexer;
 }) {
-	return resolve(projectRootDir, "snapshots", blockheight.toString(), indexer);
+	return resolve(projectRootDir, "snapshots", deploymentChain, blockheight.toString(), indexer);
 }
 
 /**
@@ -33,20 +36,17 @@ export function makeSnapshotDirectoryPath({
  * NOTE: underscore because operationKeu
  */
 export function makeSnapshotPath({
-	blockheight,
-	indexer,
 	operationName,
 	offset,
 	operationKey,
-}: {
-	blockheight: number;
-	indexer: Indexer;
+	...directoryParams
+}: Parameters<typeof makeSnapshotDirectoryPath>[0] & {
 	operationName: string;
 	offset: number;
 	operationKey: string;
 }) {
 	return resolve(
-		makeSnapshotDirectoryPath({ blockheight, indexer }),
+		makeSnapshotDirectoryPath(directoryParams),
 		`${[operationName, offset, operationKey].join("_")}.json`,
 	);
 }

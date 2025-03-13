@@ -17,6 +17,7 @@ import { injectSubgraphBlockHeightArgument } from "@/lib/subgraph-ops";
 import { Indexer } from "@/lib/types";
 import { ALL_QUERIES } from "@/queries";
 import { PonderMeta } from "@/queries/PonderMeta";
+import type { ENSDeploymentChain } from "@ensnode/ens-deployments";
 
 // subgraph (& ponder) have hard limit of 1000 for plural field `first`
 const BATCH_SIZE = 1000;
@@ -56,6 +57,7 @@ async function paginateParallel(
 	client: Client,
 	indexer: Indexer,
 	query: TypedDocumentNode,
+	deploymentChain: ENSDeploymentChain,
 	blockheight: number,
 	numRecords: number,
 ) {
@@ -83,6 +85,7 @@ async function paginateParallel(
 				variables,
 				operationKey,
 				snapshotPath: makeSnapshotPath({
+					deploymentChain,
 					blockheight,
 					indexer,
 					operationName,
@@ -143,14 +146,18 @@ async function paginateParallel(
 	);
 }
 
-export async function snapshotCommand(blockheight: number, indexer: Indexer) {
+export async function snapshotCommand(
+	deploymentChain: ENSDeploymentChain,
+	blockheight: number,
+	indexer: Indexer,
+) {
 	const url =
-		indexer === Indexer.Ponder
+		indexer === Indexer.ENSNode
 			? `${getEnsnodeUrl()}/subgraph`
-			: makeSubgraphUrl(getSubgraphApiKey());
+			: makeSubgraphUrl(deploymentChain, getSubgraphApiKey());
 
 	// if ponder, confirm that indexer is at the specific blockneight and is ready
-	if (indexer === Indexer.Ponder) {
+	if (indexer === Indexer.ENSNode) {
 		const ponderApiClient = makeClient(`${getEnsnodeUrl()}/ponder`);
 		const { data } = await ponderApiClient.query(PonderMeta);
 		// NOTE: hardcodes mainnet
@@ -199,7 +206,14 @@ export async function snapshotCommand(blockheight: number, indexer: Indexer) {
 		});
 		console.log(`TotalCount(${operationName}) — ${totalRecordCount}`);
 
-		await paginateParallel(client, indexer, document, blockheight, totalRecordCount);
+		await paginateParallel(
+			client,
+			indexer,
+			document,
+			deploymentChain,
+			blockheight,
+			totalRecordCount,
+		);
 		console.log("\n");
 	}
 

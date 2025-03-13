@@ -8,6 +8,7 @@
 		"dev": "bun run --env-file ../../.env.local --watch index.ts"
 	},
 	"dependencies": {
+		"@ensnode/ens-deployments": "^0.1.0",
 		"@jsonjoy.com/util": "^1.5.0",
 		"@urql/core": "^5.1.0",
 		"eq-lib": "workspace:*",
@@ -15,6 +16,7 @@
 		"json-diff-ts": "^4.1.0",
 		"p-queue": "^8.1.0",
 		"progress": "^2.0.3",
+		"viem": "^2.23.10",
 		"yargs": "^17.7.2"
 	},
 	"devDependencies": {
