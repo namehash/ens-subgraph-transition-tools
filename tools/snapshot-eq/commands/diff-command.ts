@@ -47,9 +47,12 @@ async function diffOperationName(
 		indexer: Indexer.ENSNode,
 	});
 
-	const subgraphSnapshots = [...new Glob("*.json").scanSync(subgraphSnapshotDirectory)].filter(
-		(name) => name.startsWith(operationName),
-	);
+	const subgraphSnapshots = [
+		...new Glob("*.json").scanSync({
+			cwd: subgraphSnapshotDirectory,
+			followSymlinks: true,
+		}),
+	].filter((name) => name.startsWith(operationName));
 
 	const bar = new ProgressBar(
 		`${operationName} [:bar] :current/:total snapshots (:percent) - :rate snapshots/sec - :etas remaining (:snapshotFileName)`,
