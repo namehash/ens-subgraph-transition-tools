@@ -18,6 +18,7 @@ import { Indexer } from "@/lib/types";
 import { ALL_QUERIES } from "@/queries";
 import { PonderMeta } from "@/queries/PonderMeta";
 import type { ENSDeploymentChain } from "@ensnode/ens-deployments";
+import { holesky } from "viem/chains";
 
 // subgraph (& ponder) have hard limit of 1000 for plural field `first`
 const BATCH_SIZE = 1000;
@@ -160,11 +161,15 @@ export async function snapshotCommand(
 	if (indexer === Indexer.ENSNode) {
 		const ponderApiClient = makeClient(`${getEnsnodeUrl()}/ponder`);
 		const { data } = await ponderApiClient.query(PonderMeta);
+
+		// select ponder network id by selected deployment chain
+		const networkId = { sepolia: "11155111", holesky: "17000" }[deploymentChain as string] || "1";
+
 		// NOTE: hardcodes mainnet
 		const {
 			ready,
 			block: { number: ponderBlockheight },
-		} = data._meta.status["1"];
+		} = data._meta.status[networkId];
 
 		if (!ready) {
 			throw new Error("Ponder is not _meta.status.mainnet.ready");
