@@ -50,28 +50,6 @@ for the subgraph, [timetravel queries](https://thegraph.com/docs/en/subgraphs/qu
 
 for ENSNode, timetravel is not supported, so the Ponder indexer inside ENSNode should be run until the specified `endBlock` and then snapshotted with this tool. in the future this may be automated, but currently the tool just enforces this context and relies on the user to run the `ensnode` project in parallel.
 
-### Snapshot Archives
-
-Snapshots are available in our [releases](https://github.com/namehash/ens-subgraph-transition-tools/releases) if you'd like to download and diff them yourself.
-
-To do so, follow the following
-
-```bash
-# download ponder snapshot to snapshot-exports
-wget -P snapshot-exports <url/for/blockheight-ponder.zip>
-# download subgraph snapshot to snapshot-exports
-wget -P snapshot-exports <url/for/blockheight-subgraph.zip>
-
-# unzips to snapshots/[:blockheight]/ponder/
-bun snapshot-eq import 21000000 ponder
-
-# unzips to snapshots/[:blockheight]/subgraph/
-bun snapshot-eq import 21000000 subgraph
-
-# diff the two snapshots
-bun snapshot-eq diff 21000000
-```
-
 ## api equivalency tool (`api-eq`)
 
 > This tool verifies equivalency in API responses between the ENS Subgraph and ENSNode for any subgraph query that might be produced by ensjs by comparing results from live queries in realtime.
