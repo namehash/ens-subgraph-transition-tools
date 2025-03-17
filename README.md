@@ -33,8 +33,8 @@ We publish historical archives of the subgraph and ENSNode via `git-annex`. If y
 # Install git-annex https://git-annex.branchable.com/install/
 brew install git-annex # MacOS, for example
 
-# Initialize git-annex
-git annex init "my laptop"
+# Initialize git-annex with our Cloudflare R2 remote
+git annex enableremote r2
 
 # Download Mainnet Subgraph Snapshots at block 21921222
 git annex get snapshots/mainnet/21921222/subgraph
