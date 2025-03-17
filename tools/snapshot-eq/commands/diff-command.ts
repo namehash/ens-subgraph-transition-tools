@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { getFirstOperationName } from "@/lib/helpers";
 import { getSnapshot, makeSnapshotDirectoryPath } from "@/lib/snapshots";
 import { ALL_QUERIES } from "@/queries";
+import type { ENSDeploymentChain } from "@ensnode/ens-deployments";
 import { Glob } from "bun";
 import { atomizeChangeset, diff } from "json-diff-ts";
 import ProgressBar from "progress";
@@ -29,20 +30,29 @@ function ignoreChangesetsByType<T extends { type: string }>(changesets: T[], typ
 	return changesets.filter(({ type }) => !types.includes(type));
 }
 
-async function diffOperationName(operationName: string, blockheight: number) {
+async function diffOperationName(
+	operationName: string,
+	deploymentChain: ENSDeploymentChain,
+	blockheight: number,
+) {
 	const subgraphSnapshotDirectory = makeSnapshotDirectoryPath({
+		deploymentChain,
 		blockheight,
 		indexer: Indexer.Subgraph,
 	});
 
 	const ponderSnapshotDirectory = makeSnapshotDirectoryPath({
+		deploymentChain,
 		blockheight,
-		indexer: Indexer.Ponder,
+		indexer: Indexer.ENSNode,
 	});
 
-	const subgraphSnapshots = [...new Glob("*.json").scanSync(subgraphSnapshotDirectory)].filter(
-		(name) => name.startsWith(operationName),
-	);
+	const subgraphSnapshots = [
+		...new Glob("*.json").scanSync({
+			cwd: subgraphSnapshotDirectory,
+			followSymlinks: true,
+		}),
+	].filter((name) => name.startsWith(operationName));
 
 	const bar = new ProgressBar(
 		`${operationName} [:bar] :current/:total snapshots (:percent) - :rate snapshots/sec - :etas remaining (:snapshotFileName)`,
@@ -128,10 +138,10 @@ async function diffOperationName(operationName: string, blockheight: number) {
 	}
 }
 
-export async function diffCommand(blockheight: number) {
+export async function diffCommand(deploymentChain: ENSDeploymentChain, blockheight: number) {
 	for (const [document] of ALL_QUERIES) {
 		const operationName = getFirstOperationName(document);
-		await diffOperationName(operationName, blockheight);
+		await diffOperationName(operationName, deploymentChain, blockheight);
 	}
 
 	console.log(`Diff(${blockheight}) — snapshots are identical.`);

@@ -8,7 +8,7 @@ This project provides a suite of tools for verifying that [ENSNode](https://gith
 
 configure via env variables or `.env.local` at root of project or inline
 - `ENSNODE_API_URL` — ex: `http://localhost:42069`
-  - must be an ENSNode instance that provies a ponder-native api endpoint at `/` and a subgraph-compatible endpoint at `/subgraph`
+  - must be an ENSNode instance that provies a ponder-native api endpoint at `/ponder` and a subgraph-compatible endpoint at `/subgraph`
 - `SUBGRAPH_API_KEY`
   - https://thegraph.com/studio/apikeys
 
@@ -16,13 +16,29 @@ commands, (run from the root of the project):
 - `bun snapshot-eq --help`
 - `bun snapshot-eq snapshot <blockheight> <ponder|subgraph>`
   - takes a 'snapshot' of the indexer at the provided blockheight by iterating over `n` collection queries
-    - persists responses to `snapshots/[:blockheight]/[:indexer]/[:operationKey].json`
+    - persists responses to `snapshots/` directory
   - if ponder, code enforces that the indexer is ready at that blockheight
   - if subgraph, timetravel queries are used
 - `bun snapshot-eq clean <blockheight> <ponder|subgraph>`
   - deletes the `snapshots/[:blockheight]/[:indexer]/` directory to bust the snapshot cache
 - `diff <blockheight>`
-  - using subgraph responses as the source of truth, compares the snapshots at `snapshots/[:blockheight]/subgraph/*.json` wtih those at `snapshots/[:blockheight]/ponder/*.json` and prints the differences between them to assist with debugging
+  - using subgraph responses as the source of truth, compares the snapshots at `snapshots/[:blockheight]/subgraph/*.json` with those at `snapshots/[:blockheight]/ponder/*.json` and prints the differences between them to assist with debugging
+
+### snapshot archives
+
+We publish historical archives of the subgraph and ENSNode via `git-annex`. If you'd like to download the snapshots instead of generating it yourself you can do the following:
+
+
+```bash
+# Install git-annex https://git-annex.branchable.com/install/
+brew install git-annex # MacOS, for example
+
+# Initialize git-annex
+git annex init "my laptop"
+
+# Download Mainnet Subgraph Snapshots at block 21921222
+git annex get snapshots/mainnet/21921222/subgraph
+```
 
 ### description
 

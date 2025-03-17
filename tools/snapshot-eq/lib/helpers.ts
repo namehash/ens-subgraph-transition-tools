@@ -1,9 +1,18 @@
+import type { ENSDeploymentChain } from "@ensnode/ens-deployments";
 import type { TypedDocumentNode } from "@urql/core";
 
-// https://api.studio.thegraph.com/query/49574/enssepolia/version/latest/graphql
-// https://api.studio.thegraph.com/query/49574/ensholesky/version/latest/graphql
-export const makeSubgraphUrl = (apiKey: string) =>
-	`https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/5XqPmWe6gjyrJtFn9cLy237i4cWw2j9HcUJEXsP5qGtH`;
+export const makeSubgraphUrl = (deploymentChain: ENSDeploymentChain, apiKey: string) => {
+	switch (deploymentChain) {
+		case "mainnet":
+			return `https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/5XqPmWe6gjyrJtFn9cLy237i4cWw2j9HcUJEXsP5qGtH`;
+		case "sepolia":
+			return `https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/DmMXLtMZnGbQXASJ7p1jfzLUbBYnYUD9zNBTxpkjHYXV`;
+		case "holesky":
+			return `https://api.studio.thegraph.com/query/49574/ensholesky/version/latest?api_key=${apiKey}`;
+		default:
+			throw new Error(`Unsupported --deployment: ${deploymentChain}`);
+	}
+};
 
 // returns the name of the first OperationDefinition
 export function getFirstOperationName(document: TypedDocumentNode) {

@@ -1,4 +1,4 @@
 export enum Indexer {
-	Ponder = "ponder",
+	ENSNode = "ensnode",
 	Subgraph = "subgraph",
 }
