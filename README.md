@@ -34,7 +34,7 @@ We publish historical archives of the subgraph and ENSNode via `git-annex`. If y
 brew install git-annex # MacOS, for example
 
 # Initialize git-annex with our Cloudflare R2 remote
-git annex enableremote r2
+git annex enableremote r2-remote publicurl=https://pub-251358737f9f483e8677fde52a408c22.r2.dev
 
 # Download Mainnet Subgraph Snapshots at block 21921222
 git annex get snapshots/mainnet/21921222/subgraph
