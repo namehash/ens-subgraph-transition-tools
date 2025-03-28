@@ -10,9 +10,7 @@ export async function cleanCommand(
 	indexer: Indexer,
 ) {
 	const snapshotDirectory = makeSnapshotDirectoryPath({ deploymentChain, blockheight, indexer });
-
 	await rm(snapshotDirectory, { recursive: true, force: true });
-	Bun.spawnSync(["git", "annex", "drop", snapshotDirectory], { stdout: "inherit" });
 
 	console.log(`↳ Clean(${blockheight}, ${indexer}) done`);
 }

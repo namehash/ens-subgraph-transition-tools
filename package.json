@@ -5,9 +5,7 @@
 		"lint": "biome check --write .",
 		"proxy:dev": "bun --filter proxy-eq dev",
 		"snapshot:dev": "bun --filter snapshot-eq dev",
-		"snapshot-eq": "bun --filter snapshot-eq --elide-lines 0 start",
-		"snapshots:push": "git annex copy --to=r2-remote snapshots/",
-		"snapshots:pull": "git annex get snapshots/"
+		"snapshot-eq": "bun --filter snapshot-eq --elide-lines 0 start"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4"
