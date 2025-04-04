@@ -12,13 +12,13 @@ import {
 import { hasSnapshot, makeSnapshotPath, persistSnapshot } from "@/lib/snapshots";
 import { print } from "graphql";
 
+import { clusterPonderSchema } from "@/lib/cluster-db";
 import { getTotalCount } from "@/lib/get-total-count";
 import { injectSubgraphBlockHeightArgument } from "@/lib/subgraph-ops";
 import { Indexer } from "@/lib/types";
+import { waitForPonderReady } from "@/lib/wait-for-ready";
 import { ALL_QUERIES } from "@/queries";
-import { PonderMeta } from "@/queries/PonderMeta";
 import type { ENSDeploymentChain } from "@ensnode/ens-deployments";
-import { holesky } from "viem/chains";
 
 // subgraph (& ponder) have hard limit of 1000 for plural field `first`
 const BATCH_SIZE = 1000;
@@ -159,25 +159,12 @@ export async function snapshotCommand(
 
 	// if ponder, confirm that indexer is at the specific blockneight and is ready
 	if (indexer === Indexer.ENSNode) {
-		const ponderApiClient = makeClient(`${getEnsnodeUrl()}/ponder`);
-		const { data } = await ponderApiClient.query(PonderMeta);
-
 		// select ponder network id by selected deployment chain
 		const networkId = { sepolia: "11155111", holesky: "17000" }[deploymentChain as string] || "1";
+		await waitForPonderReady(networkId, blockheight);
 
-		// NOTE: hardcodes mainnet
-		const {
-			ready,
-			block: { number: ponderBlockheight },
-		} = data._meta.status[networkId];
-
-		if (!ready) {
-			throw new Error("Ponder is not _meta.status.mainnet.ready");
-		}
-
-		if (ponderBlockheight !== blockheight) {
-			throw new Error(`Ponder is at ${ponderBlockheight}, ${blockheight} requeted.`);
-		}
+		// cluster if possible
+		await clusterPonderSchema();
 	}
 
 	const client = makeClient(url);
