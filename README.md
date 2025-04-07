@@ -9,22 +9,49 @@ This project provides a suite of tools for verifying that [ENSNode](https://gith
 
 > appoximates a database dump & diff, but via the graphql api: it iterates over relevant top-level collection queries, paginating over all records compares their responses to highlight discrepancies.
 
-configure via env variables or `.env.local` at root of project or inline
+configure via env variables or `.env.local` at root of project:
 - `ENSNODE_API_URL` — ex: `http://localhost:42069`
   - must be an ENSNode instance that provies a ponder-native api endpoint at `/ponder` and a subgraph-compatible endpoint at `/subgraph`
 - `SUBGRAPH_API_KEY`
   - https://thegraph.com/studio/apikeys
+- `DATABASE_URL`
+  - used for `CLUSTER`ing an ENSIndexer index before snapshotting, same value as ENSIndexer's `DATABASE_URL`
 
-commands, (run from the root of the project):
-- `bun snapshot-eq --help`
-- `bun snapshot-eq snapshot <blockheight> <ensnode|subgraph> [--deployment=(mainnet|sepolia|holesky)]`
+commands, (run from `tools/snapshot-eq`):
+- `bun start --help`
+- `bun start snapshot <blockheight> <ensnode|subgraph> [--deployment=(mainnet|sepolia|holesky)]`
   - takes a 'snapshot' of the indexer at the provided blockheight by iterating over all pages of resources, persisting responses to `snapshots/`
-  - if ensnode, code enforces that the indexer is ready at that blockheight
-  - if subgraph, timetravel queries are used
-- `bun snapshot-eq clean <blockheight> <ensnode|subgraph> [--deployment=(mainnet|sepolia|holesky)]`
+  - if ensnode, code waits for the indexer to be ready at that blockheight and CLUSTERs the `public` schema
+  - if subgraph, timetravel queries are used to fetch data
+- `bun start clean <blockheight> <ensnode|subgraph> [--deployment=(mainnet|sepolia|holesky)]`
   - deletes the specific `snapshots/` directory
-- `diff <blockheight> [--deployment=(mainnet|sepolia|holesky)]`
+- `bun start diff <blockheight> [--deployment=(mainnet|sepolia|holesky)]`
   - using subgraph responses as the source of truth, compares snapshots and prints any differences between them
+
+### Snapshot Example Usage
+
+These commands will snapshot ENSNode configured with the eth plugin reading from the mainnet ENS deployment, producing a 1:1 Subgraph-compatible index.
+
+```bash
+# 1. have ENSNode running with ENSIndexer like so:
+DATABASE_SCHEMA=public \
+ENS_DEPLOYMENT_CHAIN=mainnet \
+ACTIVE_PLUGINS=eth \
+END_BLOCK=21921222 \
+pnpm run start
+
+# 2. snapshot tool will wait for ENSNode to be at that block, CLUSTER it, and snapshot it
+ENSNODE_URL=http://localhost:42069 \
+DATABASE_URL=postgresql://postgres:password@127.0.0.1/ponder \
+bun start snapshot --deployment mainnet ensnode 21921222
+
+# 3. acquire subgraph snapshot via Snapshot Archives (below) OR snapshot it yourself:
+SUBGRAPH_API_KEY=xyz \
+bun start snapshot --deployment mainnet subgraph 21921222
+
+# 4. diff the two snapshots
+bun start diff --deployment mainnet 21921222
+```
 
 ### Snapshot Archives
 
