@@ -37,6 +37,7 @@ These commands will snapshot ENSNode configured with the eth plugin reading from
 DATABASE_SCHEMA=public \
 ENS_DEPLOYMENT_CHAIN=mainnet \
 ACTIVE_PLUGINS=eth \
+HEAL_REVERSE_ADDRESSES=false \
 END_BLOCK=21921222 \
 pnpm run start
 
