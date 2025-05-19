@@ -69,6 +69,9 @@ export async function clusterPonderSchema() {
   `;
 
 	console.log(`CLUSTERING 'public' tables...`);
-	await sql`SELECT cluster_all_tables();`;
-	console.log("↳ done");
+	const startTime = performance.now();
+	await sql`SELECT cluster_all_tables();`.execute();
+
+	const duration = ((performance.now() - startTime) / 1000).toFixed(2);
+	console.log(`↳ done in ${duration}s`);
 }

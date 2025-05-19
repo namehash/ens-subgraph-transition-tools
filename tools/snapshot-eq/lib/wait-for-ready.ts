@@ -12,12 +12,17 @@ export async function waitForPonderReady(networkId: string, targetBlockheight: n
 
 		if (!data) throw new Error("ENSIndexer API unavailable!");
 
-		const {
-			ready,
-			block: { number: ponderBlockheight },
-		} = data._meta.status[networkId];
+		try {
+			const {
+				ready,
+				block: { number: ponderBlockheight },
+			} = data._meta.status[networkId];
 
-		return { ready, block: ponderBlockheight };
+			return { ready, block: ponderBlockheight };
+		} catch (error) {
+			console.log(data);
+			throw error;
+		}
 	};
 
 	let { block: currentBlockheight } = await getBlockheight();

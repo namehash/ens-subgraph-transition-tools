@@ -5,6 +5,14 @@ This project provides a suite of tools for verifying that [ENSNode](https://gith
 - **Snapshot Equivalency Tool**: 1:1 data
 - **API Equivalency Tool**: 1:1 API responses
 
+## Install
+
+```bash
+git clone https://github.com/namehash/ens-subgraph-transition-tools
+cd ens-subgraph-transition-tools
+bun install
+```
+
 ## Snapshot Equivalency Tool (`snapshot-eq`)
 
 > appoximates a database dump & diff, but via the graphql api: it iterates over relevant top-level collection queries, paginating over all records compares their responses to highlight discrepancies.
@@ -33,26 +41,50 @@ commands, (run from `tools/snapshot-eq`):
 These commands will snapshot ENSNode configured with the eth plugin reading from the mainnet ENS deployment, producing a 1:1 Subgraph-compatible index.
 
 ```bash
-# 1. have ENSNode running with ENSIndexer like so:
+# 0. start in the snapshot-eq tool directory
+cd tools/snapshot-eq
+
+# 1. acquire subgraph snapshot via Snapshot Archives (below) OR snapshot it yourself:
+SUBGRAPH_API_KEY=xyz \
+bun start snapshot --deployment mainnet 21921222 subgraph
+
+# 2. clean the existing mainnet ensnode snapshot directory
+bun start clean --deployment mainnet 21921222 ensnode
+
+# 3. have ENSNode running with ENSIndexer like so:
 DATABASE_SCHEMA=public \
 ENS_DEPLOYMENT_CHAIN=mainnet \
-ACTIVE_PLUGINS=eth \
+ACTIVE_PLUGINS=subgraph \
 HEAL_REVERSE_ADDRESSES=false \
 END_BLOCK=21921222 \
-pnpm run start
+pnpm run dev --disable-ui
 
-# 2. snapshot tool will wait for ENSNode to be at that block, CLUSTER it, and snapshot it
+# 2. run the snapshot tool
+# NOTE: it will wait for ENSNode to be at that block, CLUSTER it, and snapshot it
 ENSNODE_URL=http://localhost:42069 \
 DATABASE_URL=postgresql://postgres:password@127.0.0.1/ponder \
-bun start snapshot --deployment mainnet ensnode 21921222
-
-# 3. acquire subgraph snapshot via Snapshot Archives (below) OR snapshot it yourself:
-SUBGRAPH_API_KEY=xyz \
-bun start snapshot --deployment mainnet subgraph 21921222
+bun start snapshot --deployment mainnet 21921222 ensnode
 
 # 4. diff the two snapshots
 bun start diff --deployment mainnet 21921222
 ```
+
+NOTE: somtimes the subgraph returns **incorrect** responses, in particular for event `id`s — if you see many event id mismatches (especially off-by-ones) simply delete the offending subgraph snapshot and re-snapshot like:
+
+```bash
+rm ../../snapshots/mainnet/21921222/subgraph/Domains_4192000_15769084310.json
+SUBGRAPH_API_KEY=xyz bun start snapshot --deployment mainnet 21921222 subgraph
+```
+
+NOTE: we're running ponder in development mode because otherwise we'd have to manually drop the `public` schema, but make sure not to edit any files in the ensindexer project or it'll start indexing from scratch. use `pnpm run start` if you don't want to worry about that, and be prepared to run `DROP SCHEMA 'public' CASCADE;` when you want to run ponder in dev mode again.
+
+NOTE: snapshots are resumable, so you can always Ctrl-C and re-start a snapshot and it will resume where it left off (after computing TotalCount).
+
+NOTE: there's currently a bug with the automatic `CLUSTER` behavior included in the tool, where it doesn't actually cluster the tables or seem to do anything at all. Because of this, the offset-based query pattern we use to exhaustively query the graphql api will get incredibly slow very quickly. You can CLUSTER the tables normally by executing the commands from `tools/snapshot-eq/lib/cluster-db.ts` in your own psql or [TablePlus](https://tableplus.com/) or whatever.
+
+Basically what I do is run ENSIndexer in one terminal, start the snapshot tool in the other, and go to sleep. ENSIndexer will take 5-7 hours to get to block 21921222 after which the CLUSTER will run (and do basically nothing), and snapshotting will begin. The snapshotting will be much slower than ideal but it has at least a few more hours until I wake up to make some progress. When I wake up I Ctrl-C the snapshot, manually CLUSTER the tables, and continue the snapshot. Sometimes the un-CLUSTERed queries take long enough that the statement timeout error is thrown and indexing will stop.
+
+Obviously my goal is to fix the CLUSTERing behavior, but if this note is still here then it's not fixed yet.
 
 ### Snapshot Archives
 
