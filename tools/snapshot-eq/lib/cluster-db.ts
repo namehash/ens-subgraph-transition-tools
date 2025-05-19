@@ -1,4 +1,4 @@
-import { sql } from "bun";
+import { Client } from "pg";
 
 export async function clusterPonderSchema() {
 	if (!process.env.DATABASE_URL) {
@@ -8,70 +8,116 @@ export async function clusterPonderSchema() {
 		return;
 	}
 
-	await sql`
-    -- Function to generate and execute CLUSTER commands for public tables
-    CREATE OR REPLACE FUNCTION cluster_all_tables() RETURNS void AS $$
-    DECLARE
-        table_record record;
-        table_name text;
-        primary_index text;
-        cluster_command text;
-    BEGIN
-        -- Loop through tables in public schema only
-        FOR table_record IN
-            SELECT
-                c.relname as table_name,
-                (SELECT ci.relname
-                FROM pg_class ci
-                WHERE ci.oid = i.indexrelid) as index_name
-            FROM pg_class c
-            JOIN pg_namespace n ON n.oid = c.relnamespace
-            -- Join with pg_index to get primary key indexes
-            JOIN pg_index i ON i.indrelid = c.oid
-            WHERE
-                -- Regular tables only
-                c.relkind = 'r'
-                -- Only public schema
-                AND n.nspname = 'public'
-                -- Exclude tables starting with underscore
-                AND c.relname NOT LIKE '\_%'
-                -- Primary key indexes only
-                AND i.indisprimary
-            ORDER BY c.relname
-        LOOP
-            table_name := table_record.table_name;
-            primary_index := table_record.index_name;
+	// Initialize the PostgreSQL client
+	const client = new Client({ connectionString: process.env.DATABASE_URL });
 
-            IF primary_index IS NOT NULL AND primary_index != '' THEN
-                -- Build and execute CLUSTER command
-                cluster_command := format('CLUSTER %I USING %I',
-                                        table_name,
-                                        primary_index);
+	try {
+		// Connect to the database
+		await client.connect();
+		console.log("Successfully connected to the database.");
 
-                RAISE NOTICE 'Executing: %', cluster_command;
+		// Listen for NOTICE and WARNING messages from PostgreSQL
+		// This is crucial for seeing what the cluster_all_tables function is doing
+		client.on("notice", (msg) => {
+			// msg is an object with properties like 'message', 'severity', 'code', etc.
+			if (msg.severity === "WARNING") {
+				console.warn(`PostgreSQL WARNING: ${msg.message}`);
+			} else {
+				console.log(`PostgreSQL Notice: ${msg.message}`);
+			}
+		});
 
-                -- Execute the CLUSTER command
-                EXECUTE cluster_command;
+		console.log("Creating or replacing cluster_all_tables function...");
+		// Define the PostgreSQL function to cluster tables
+		await client.query(`
+            CREATE OR REPLACE FUNCTION cluster_all_tables() RETURNS void AS $$
+            DECLARE
+                table_record record;
+                table_name_ident text; -- For use with format %I
+                index_name_ident text; -- For use with format %I
+                cluster_command text;
+            BEGIN
+                -- Loop through tables in public schema that have a primary key
+                -- and do not start with an underscore.
+                FOR table_record IN
+                    SELECT
+                        c.relname AS table_name, -- Actual table name
+                        (SELECT idx_c.relname FROM pg_class idx_c WHERE idx_c.oid = i.indexrelid) AS index_name -- Actual index name
+                    FROM pg_class c
+                    JOIN pg_namespace n ON n.oid = c.relnamespace
+                    JOIN pg_index i ON i.indrelid = c.oid -- i is the pg_index entry for the index
+                    WHERE
+                        c.relkind = 'r'                           -- Regular tables only
+                        AND n.nspname = 'public'                  -- Only public schema
+                        AND LEFT(c.relname, 1) <> '_'             -- Exclude tables starting with underscore (more robust check)
+                        AND i.indisprimary                        -- Primary key indexes only
+                    ORDER BY c.relname
+                LOOP
+                    table_name_ident := table_record.table_name;
+                    index_name_ident := table_record.index_name;
 
-                -- Log completion
-                RAISE NOTICE 'Clustered table % using index %',
-                            table_name,
-                            primary_index;
-            ELSE
-                RAISE NOTICE 'Skipping table % - no valid primary key index found',
-                            table_name;
-            END IF;
-        END LOOP;
+                    -- Check if a primary key index was found
+                    IF index_name_ident IS NOT NULL AND index_name_ident <> '' THEN
+                        -- Build the CLUSTER command using format() for safe identifier quoting
+                        -- Explicitly qualify table with public schema for clarity, though CLUSTER typically works on search_path
+                        cluster_command := format('CLUSTER public.%I USING %I',
+                                                table_name_ident,
+                                                index_name_ident);
 
-        RAISE NOTICE 'All public tables have been clustered successfully.';
-    END;
-    $$ LANGUAGE plpgsql;
-  `;
+                        RAISE NOTICE 'Attempting to execute: %', cluster_command;
 
-	console.log(`CLUSTERING 'public' tables...`);
-	const startTime = performance.now();
-	await sql`SELECT cluster_all_tables();`.execute();
+                        -- Execute the CLUSTER command with its own exception block
+                        -- This allows the function to continue if one CLUSTER fails
+                        BEGIN
+                            EXECUTE cluster_command;
+                            RAISE NOTICE 'Successfully clustered table public.%I using index %I',
+                                        table_name_ident,
+                                        index_name_ident;
+                        EXCEPTION
+                            WHEN OTHERS THEN
+                                -- If CLUSTER fails (e.g., lock timeout, permissions, transaction issue),
+                                -- log a warning with details and continue to the next table.
+                                RAISE WARNING 'Failed to CLUSTER table public.%I using index %I. SQLSTATE: %, SQLERRM: %',
+                                            table_name_ident,
+                                            index_name_ident,
+                                            SQLSTATE, -- PostgreSQL error code
+                                            SQLERRM;  -- PostgreSQL error message
+                        END;
+                    ELSE
+                        -- This case should ideally not be hit if the main query correctly selects tables with PKs.
+                        -- If it is, it means a table was selected but its index_name was missing.
+                        RAISE NOTICE 'Skipping table public.%I - no valid primary key index name found after selection.',
+                                    table_name_ident;
+                    END IF;
+                END LOOP;
 
-	const duration = ((performance.now() - startTime) / 1000).toFixed(2);
-	console.log(`↳ done in ${duration}s`);
+                RAISE NOTICE 'Finished attempting to cluster all applicable public tables.';
+            END;
+            $$ LANGUAGE plpgsql;
+        `);
+		console.log("Function cluster_all_tables created/replaced successfully.");
+
+		// Execute the function
+		console.log("Calling cluster_all_tables() to CLUSTER 'public' tables...");
+		const startTime = performance.now();
+		await client.query("SELECT cluster_all_tables();"); // This will trigger notices
+
+		const duration = ((performance.now() - startTime) / 1000).toFixed(2);
+		console.log(`↳ CLUSTER operation attempt finished. Duration: ${duration}s`);
+		console.log(
+			"Review the 'PostgreSQL Notice:' and 'PostgreSQL WARNING:' messages above for details on each table.",
+		);
+	} catch (error) {
+		// Catch any errors from client.connect(), client.query(), etc.
+		console.error("Error during clustering process:", error);
+	} finally {
+		// Ensure the client connection is closed
+		if (client) {
+			await client.end();
+			console.log("Database connection closed.");
+		}
+	}
 }
+
+// Example of how to run it (ensure DATABASE_URL is set in your environment)
+// clusterPonderSchema().catch(console.error);

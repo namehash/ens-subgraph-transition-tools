@@ -15,12 +15,14 @@
 		"graphql": "^16.10.0",
 		"json-diff-ts": "^4.1.0",
 		"p-queue": "^8.1.0",
+		"pg": "^8.16.0",
 		"progress": "^2.0.3",
 		"viem": "^2.23.10",
 		"yargs": "^17.7.2"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
+		"@types/pg": "^8.15.2",
 		"@types/progress": "^2.0.7",
 		"@types/yargs": "^17.0.33"
 	},
