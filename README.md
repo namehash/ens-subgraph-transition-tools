@@ -80,12 +80,6 @@ NOTE: we're running ponder in development mode because otherwise we'd have to ma
 
 NOTE: snapshots are resumable, so you can always Ctrl-C and re-start a snapshot and it will resume where it left off (after computing TotalCount).
 
-NOTE: there's currently a bug with the automatic `CLUSTER` behavior included in the tool, where it doesn't actually cluster the tables or seem to do anything at all. Because of this, the offset-based query pattern we use to exhaustively query the graphql api will get incredibly slow very quickly. You can CLUSTER the tables normally by executing the commands from `tools/snapshot-eq/lib/cluster-db.ts` in your own psql or [TablePlus](https://tableplus.com/) or whatever.
-
-Basically what I do is run ENSIndexer in one terminal, start the snapshot tool in the other, and go to sleep. ENSIndexer will take 5-7 hours to get to block 21921222 after which the CLUSTER will run (and do basically nothing), and snapshotting will begin. The snapshotting will be much slower than ideal but it has at least a few more hours until I wake up to make some progress. When I wake up I Ctrl-C the snapshot, manually CLUSTER the tables, and continue the snapshot. Sometimes the un-CLUSTERed queries take long enough that the statement timeout error is thrown and indexing will stop.
-
-Obviously my goal is to fix the CLUSTERing behavior, but if this note is still here then it's not fixed yet.
-
 ### Snapshot Archives
 
 🚧 WIP
