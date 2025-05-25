@@ -94,10 +94,15 @@ async function diffOperationName(
 
 		// the subgraph is having a hard time with event ids for some reason where,
 		// intermittently, the event ids returned by the subgraph are off-by-one.
-		// in that case we want to delete the snapshot to progress the diff and instruct the user
-		// to re-snapshot the subgraph to pull the hopefully correct information down instead.
-		if (changeset.some((cs) => cs.path.match(/\.events\[\d+\]\.id$/) !== null)) {
-			// has event id mismatch
+		// in that case if that's the only issue we see we want to delete the snapshot
+		// to progress the diff and instruct the user to re-snapshot the subgraph to pull the hopefully
+		// correct information down instead.
+		const eventIdMismatches = changeset.filter(
+			(cs) => cs.path.match(/\.events\[\d+\]\.id$/) !== null,
+		);
+		const onlyDiffIsEventId = changeset.length === eventIdMismatches.length;
+		if (onlyDiffIsEventId) {
+			// has only event id mismatches
 			await Bun.file(subgraphSnapshotPath).delete();
 			bar.interrupt(
 				`Deleted ${snapshotFileName} because of event id mismatch — make sure to re-snapshot the subgraph.`,
