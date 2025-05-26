@@ -100,8 +100,9 @@ async function diffOperationName(
 		const eventIdMismatches = changeset.filter(
 			(cs) => cs.path.match(/\.events\[\d+\]\.id$/) !== null,
 		);
+		const hasChangesets = changeset.length > 0;
 		const onlyDiffIsEventId = changeset.length === eventIdMismatches.length;
-		if (onlyDiffIsEventId) {
+		if (hasChangesets && onlyDiffIsEventId) {
 			// has only event id mismatches
 			await Bun.file(subgraphSnapshotPath).delete();
 			bar.interrupt(
