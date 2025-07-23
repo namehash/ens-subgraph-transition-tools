@@ -5,7 +5,7 @@ export const PonderMeta = gql<{
 		status: Record<
 			string,
 			{
-				ready: boolean;
+				id: number;
 				block: { number: number; timestamp: number };
 			}
 		>;

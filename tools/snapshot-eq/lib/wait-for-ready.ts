@@ -6,6 +6,10 @@ import { getEnsnodeUrl } from "./helpers";
 
 export async function waitForPonderReady(networkId: string, targetBlockheight: number) {
 	const ponderApiClient = makeClient(`${getEnsnodeUrl()}/ponder`);
+	/**
+	 * Check if the Ponder API is ready (backfill complete across all chains).
+	 */
+	const isPonderApiReady = async () => fetch(`${getEnsnodeUrl()}/ready`).then((res) => res.ok);
 
 	const getBlockheight = async () => {
 		const { data } = await ponderApiClient.query(PonderMeta);
@@ -14,18 +18,17 @@ export async function waitForPonderReady(networkId: string, targetBlockheight: n
 
 		try {
 			const {
-				ready,
 				block: { number: ponderBlockheight },
 			} = data._meta.status[networkId];
 
-			return { ready, block: ponderBlockheight };
+			return ponderBlockheight;
 		} catch (error) {
 			console.log(data);
 			throw error;
 		}
 	};
 
-	let { block: currentBlockheight } = await getBlockheight();
+	let currentBlockheight = await getBlockheight();
 
 	const bar = new ProgressBar(
 		"Indexing [:bar] :current/:total blocks (:percent) - :rate blocks/sec - :etas remaining",
@@ -38,7 +41,9 @@ export async function waitForPonderReady(networkId: string, targetBlockheight: n
 	);
 
 	while (true) {
-		const { ready, block: curr } = await getBlockheight();
+		const [ready, curr] = await Promise.all([isPonderApiReady(), getBlockheight()]);
+
+		console.log("waitForPonderReady", { networkId, ready, curr, targetBlockheight });
 
 		// error check
 		if (curr > targetBlockheight) {
