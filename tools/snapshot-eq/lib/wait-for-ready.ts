@@ -43,8 +43,6 @@ export async function waitForPonderReady(networkId: string, targetBlockheight: n
 	while (true) {
 		const [ready, curr] = await Promise.all([isPonderApiReady(), getBlockheight()]);
 
-		console.log("waitForPonderReady", { networkId, ready, curr, targetBlockheight });
-
 		// error check
 		if (curr > targetBlockheight) {
 			throw new Error(`ENSIndexer indexed further than expected ${targetBlockheight}!`);
