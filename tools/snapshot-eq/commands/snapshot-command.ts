@@ -69,8 +69,8 @@ async function paginateParallel(
 
 	// TODO: integrate AbortController (?)
 	const queue = new PQueue({
-		// subgraph is distributed, so parallelize, ponder is single-instance bound by postgres
-		concurrency: indexer === Indexer.Subgraph ? 10 : 1,
+		// both, NameHash GraphNode, and ENSNode are not distributed
+		concurrency: 1
 	});
 
 	const totalPages = Math.ceil(numRecords / BATCH_SIZE);
