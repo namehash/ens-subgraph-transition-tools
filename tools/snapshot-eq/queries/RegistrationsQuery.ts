@@ -2,7 +2,7 @@ import { gql } from "@urql/core";
 
 export const RegistrationsQuery = gql`
   query Registrations($first: Int!, $skip: Int!) {
-    items: registrations(first: $first, skip: $skip) {
+    items: registrations(first: $first, skip: $skip, orderBy: id) {
       id
       domain { id }
       registrationDate
