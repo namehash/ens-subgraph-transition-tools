@@ -8,7 +8,8 @@
 		"dev": "bun run --env-file ../../.env.local --watch index.ts"
 	},
 	"dependencies": {
-		"@ensnode/ens-deployments": "^0.1.0",
+		"@ensnode/datasources": "^0.34.0",
+		"@ensnode/ensnode-sdk": "^0.34.0",
 		"@jsonjoy.com/util": "^1.5.0",
 		"@urql/core": "^5.1.0",
 		"eq-lib": "workspace:*",

@@ -18,7 +18,7 @@ import { injectSubgraphBlockHeightArgument } from "@/lib/subgraph-ops";
 import { Indexer } from "@/lib/types";
 import { waitForPonderReady } from "@/lib/wait-for-ready";
 import { ALL_QUERIES } from "@/queries";
-import type { ENSDeploymentChain } from "@ensnode/ens-deployments";
+import type { ENSNamespaceId } from "@ensnode/datasources";
 
 // subgraph (& ponder) have hard limit of 1000 for plural field `first`
 const BATCH_SIZE = 1000;
@@ -58,7 +58,7 @@ async function paginateParallel(
 	client: Client,
 	indexer: Indexer,
 	query: TypedDocumentNode,
-	deploymentChain: ENSDeploymentChain,
+	namespace: ENSNamespaceId,
 	blockheight: number,
 	numRecords: number,
 ) {
@@ -86,7 +86,7 @@ async function paginateParallel(
 				variables,
 				operationKey,
 				snapshotPath: makeSnapshotPath({
-					deploymentChain,
+					namespace,
 					blockheight,
 					indexer,
 					operationName,
@@ -148,19 +148,19 @@ async function paginateParallel(
 }
 
 export async function snapshotCommand(
-	deploymentChain: ENSDeploymentChain,
+	namespace: ENSNamespaceId,
 	blockheight: number,
 	indexer: Indexer,
 ) {
 	const url =
 		indexer === Indexer.ENSNode
 			? `${getEnsnodeUrl()}/subgraph`
-			: makeSubgraphUrl(deploymentChain, getSubgraphApiKey());
+			: makeSubgraphUrl(namespace, getSubgraphApiKey());
 
 	// if ponder, confirm that indexer is at the specific blockneight and is ready
 	if (indexer === Indexer.ENSNode) {
-		// select ponder network id by selected deployment chain
-		const networkId = { sepolia: "11155111", holesky: "17000" }[deploymentChain as string] || "1";
+		// select ponder network id by selected namespace chain
+		const networkId = { sepolia: "11155111", holesky: "17000" }[namespace as string] || "1";
 		await waitForPonderReady(networkId, blockheight);
 
 		// cluster if possible
@@ -198,14 +198,7 @@ export async function snapshotCommand(
 		});
 		console.log(`TotalCount(${operationName}) — ${totalRecordCount}`);
 
-		await paginateParallel(
-			client,
-			indexer,
-			document,
-			deploymentChain,
-			blockheight,
-			totalRecordCount,
-		);
+		await paginateParallel(client, indexer, document, namespace, blockheight, totalRecordCount);
 		console.log("\n");
 	}
 

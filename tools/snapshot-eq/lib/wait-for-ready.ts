@@ -1,27 +1,55 @@
 import { PonderMeta } from "@/queries/PonderMeta";
+import { ENSNodeClient } from "@ensnode/ensnode-sdk";
 import { sleep } from "bun";
 import { makeClient } from "eq-lib";
 import ProgressBar from "progress";
 import { getEnsnodeUrl } from "./helpers";
 
 export async function waitForPonderReady(networkId: string, targetBlockheight: number) {
-	const ponderApiClient = makeClient(`${getEnsnodeUrl()}/ponder`);
+	const client = new ENSNodeClient({ url: new URL(getEnsnodeUrl()) });
 
 	const getBlockheight = async () => {
-		const { data } = await ponderApiClient.query(PonderMeta);
+		const data = await client.indexingStatus();
 
-		if (!data) throw new Error("ENSIndexer API unavailable!");
+		switch (data.overallStatus) {
+			case "unstarted": {
+				return { ready: false, block: 0 };
+			}
+			case "indexer-error": {
+				throw new Error(`ENSIndexer Indexing Status Error: ${data}`);
+			}
+			case "following": {
+				throw new Error("ENSIndexer is following but shouldn't be in snapshot mode.");
+			}
+			case "backfill":
+			case "completed": {
+				const chainStatus = data.chains.get(Number(networkId));
 
-		try {
-			const {
-				ready,
-				block: { number: ponderBlockheight },
-			} = data._meta.status[networkId];
+				if (!chainStatus) {
+					throw new Error(`Invariant: ENSIndexer is indexing ${networkId}`);
+				}
 
-			return { ready, block: ponderBlockheight };
-		} catch (error) {
-			console.log(data);
-			throw error;
+				if (chainStatus.config.endBlock?.number !== targetBlockheight) {
+					throw new Error(`Invariant: ENSIndexer must be indexing to ${targetBlockheight}`);
+				}
+
+				switch (chainStatus.status) {
+					case "unstarted": {
+						return { ready: false, block: 0 };
+					}
+					case "backfill": {
+						return { ready: false, block: chainStatus.latestIndexedBlock.number };
+					}
+					case "completed": {
+						if (chainStatus.latestIndexedBlock.number !== targetBlockheight) {
+							throw new Error(
+								`Invariant: ENSIndexer says chain ${networkId} is completed but latestIndexedBlock isn't ${targetBlockheight}: ${JSON.stringify(chainStatus)}`,
+							);
+						}
+						return { ready: true, block: targetBlockheight };
+					}
+				}
+			}
 		}
 	};
 

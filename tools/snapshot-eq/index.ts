@@ -4,14 +4,14 @@ import yargs from "yargs/yargs";
 import { cleanCommand } from "@/commands/clean-command";
 import { diffCommand } from "@/commands/diff-command";
 import { snapshotCommand } from "@/commands/snapshot-command";
-import type { ENSDeploymentChain } from "@ensnode/ens-deployments";
+import { type ENSNamespaceId, ENSNamespaceIds } from "@ensnode/datasources";
 
 yargs(process.argv.slice(2))
 	.scriptName("snapshot-eq")
-	.option("deployment", {
+	.option("namespace", {
 		type: "string",
-		description: "ENS deployment chain",
-		default: "mainnet",
+		description: "ENS Namespace",
+		default: ENSNamespaceIds.Mainnet,
 		global: true,
 	})
 	.command(
@@ -32,7 +32,7 @@ yargs(process.argv.slice(2))
 		},
 		async (argv) => {
 			await snapshotCommand(
-				argv.deployment as ENSDeploymentChain,
+				argv.namespace as ENSNamespaceId,
 				argv.blockheight,
 				argv.indexer as Indexer,
 			);
@@ -56,7 +56,7 @@ yargs(process.argv.slice(2))
 		},
 		async (argv) => {
 			await cleanCommand(
-				argv.deployment as ENSDeploymentChain,
+				argv.namespace as ENSNamespaceId,
 				argv.blockheight,
 				argv.indexer as Indexer,
 			);
@@ -73,7 +73,7 @@ yargs(process.argv.slice(2))
 			});
 		},
 		async (argv) => {
-			await diffCommand(argv.deployment as ENSDeploymentChain, argv.blockheight);
+			await diffCommand(argv.namespace as ENSNamespaceId, argv.blockheight);
 		},
 	)
 	.strict()

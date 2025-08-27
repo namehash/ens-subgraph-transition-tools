@@ -1,8 +1,8 @@
-import type { ENSDeploymentChain } from "@ensnode/ens-deployments";
+import type { ENSNamespaceId } from "@ensnode/datasources";
 import type { TypedDocumentNode } from "@urql/core";
 
-export const makeSubgraphUrl = (deploymentChain: ENSDeploymentChain, apiKey: string) => {
-	switch (deploymentChain) {
+export const makeSubgraphUrl = (namespace: ENSNamespaceId, apiKey: string) => {
+	switch (namespace) {
 		case "mainnet":
 			return `https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/5XqPmWe6gjyrJtFn9cLy237i4cWw2j9HcUJEXsP5qGtH`;
 		case "sepolia":
@@ -10,7 +10,7 @@ export const makeSubgraphUrl = (deploymentChain: ENSDeploymentChain, apiKey: str
 		case "holesky":
 			return `https://api.studio.thegraph.com/query/49574/ensholesky/version/latest?api_key=${apiKey}`;
 		default:
-			throw new Error(`Unsupported --deployment: ${deploymentChain}`);
+			throw new Error(`Unsupported --namespace: ${namespace}`);
 	}
 };
 
