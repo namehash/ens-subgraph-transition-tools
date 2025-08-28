@@ -41,11 +41,12 @@ export async function waitForPonderReady(networkId: string, targetBlockheight: n
 						return { ready: false, block: chainStatus.latestIndexedBlock.number };
 					}
 					case "completed": {
-						if (chainStatus.latestIndexedBlock.number !== targetBlockheight) {
-							throw new Error(
-								`Invariant: ENSIndexer says chain ${networkId} is completed but latestIndexedBlock isn't ${targetBlockheight}: ${JSON.stringify(chainStatus)}`,
-							);
-						}
+						// TODO: re-enable once ponder fixes the off-by-n-if-no-events issue
+						// if (chainStatus.latestIndexedBlock.number !== targetBlockheight) {
+						// 	throw new Error(
+						// 		`Invariant: ENSIndexer says chain ${networkId} is completed but latestIndexedBlock isn't ${targetBlockheight}: ${JSON.stringify(chainStatus)}`,
+						// 	);
+						// }
 						return { ready: true, block: targetBlockheight };
 					}
 				}
