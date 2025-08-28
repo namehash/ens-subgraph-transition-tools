@@ -1,7 +1,5 @@
-import { PonderMeta } from "@/queries/PonderMeta";
 import { ENSNodeClient } from "@ensnode/ensnode-sdk";
 import { sleep } from "bun";
-import { makeClient } from "eq-lib";
 import ProgressBar from "progress";
 import { getEnsnodeUrl } from "./helpers";
 

@@ -128,7 +128,7 @@ async function diffOperationName(
 		const filtered = ignoreChangesetsByType(filteredByPath, []);
 
 		///
-		/// end changeset filterd
+		/// end changeset filters
 		///
 
 		// they're equal, huzzah

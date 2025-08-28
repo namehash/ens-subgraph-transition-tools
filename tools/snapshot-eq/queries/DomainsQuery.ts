@@ -2,7 +2,7 @@ import { gql } from "@urql/core";
 
 export const DomainsQuery = gql`
   query Domains($first: Int!, $skip: Int!) {
-    items: domains(first: $first, skip: $skip, orderBy: id) {
+    items: domains(first: $first, skip: $skip) {
       id
       name
       labelName
