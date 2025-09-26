@@ -36,8 +36,8 @@
     "tools/snapshot-eq": {
       "name": "snapshot-eq",
       "dependencies": {
-        "@ensnode/datasources": "^0.34.0",
-        "@ensnode/ensnode-sdk": "^0.34.0",
+        "@ensnode/datasources": "^0.35.0",
+        "@ensnode/ensnode-sdk": "link:@ensnode/ensnode-sdk",
         "@jsonjoy.com/util": "^1.5.0",
         "@urql/core": "^5.1.0",
         "eq-lib": "workspace:*",
@@ -83,11 +83,9 @@
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@1.9.4", "", { "os": "win32", "cpu": "x64" }, "sha512-8Y5wMhVIPaWe6jw2H+KlEm4wP/f7EW3810ZLmDlrEEy5KvBsb9ECEfu/kMWD484ijfQ8+nIi0giMgu9g1UAuuA=="],
 
-    "@ensdomains/address-encoder": ["@ensdomains/address-encoder@1.1.4", "", { "dependencies": { "@noble/curves": "^1.2.0", "@noble/hashes": "^1.3.2", "@scure/base": "^1.1.5" } }, "sha512-hBY6VxVw9A1cMPOKDIvPB2nlmgaw2dvrrj/p/9tkGWmD+qdfKYZTdZuSdFcUGxhhzEB4HeLG/a98ytlTq84KcA=="],
+    "@ensnode/datasources": ["@ensnode/datasources@0.35.0", "", { "dependencies": { "@ponder/utils": "0.2.10" }, "peerDependencies": { "viem": "^2.22.13" } }, "sha512-67yPibdjaImwyeJlZtqq8qsEmEt609+H3P4r49SMfPRG7WSCHgmlCtquORDpjsqw3x7fqpBCJN9fEmzeIIwXAg=="],
 
-    "@ensnode/datasources": ["@ensnode/datasources@0.34.0", "", { "dependencies": { "@ponder/utils": "0.2.10" }, "peerDependencies": { "viem": "^2.22.13" } }, "sha512-CZX4amEwlatYWtI1qOYJJPjfA/oUbMpaNgDtmZngEbvL/p/GijYncvxIeVXc+P3lR17W2GDzejIOUWQToWCTMQ=="],
-
-    "@ensnode/ensnode-sdk": ["@ensnode/ensnode-sdk@0.34.0", "", { "dependencies": { "@ensdomains/address-encoder": "^1.1.2", "@ensnode/datasources": "0.34.0", "zod": "^3.25.7" }, "peerDependencies": { "viem": "^2.22.13" } }, "sha512-pJu2yN5mbDYrKqe+ItiXiNVySULa7rx21592I+SHg6kwwcQxcmY3NnrGijX7qpAYr/AMUrAyJFrkzS1frgsZaQ=="],
+    "@ensnode/ensnode-sdk": ["@ensnode/ensnode-sdk@link:@ensnode/ensnode-sdk", {}],
 
     "@jsonjoy.com/util": ["@jsonjoy.com/util@1.6.0", "", { "peerDependencies": { "tslib": "2" } }, "sha512-sw/RMbehRhN68WRtcKCpQOPfnH6lLP4GJfqzi3iYej8tnzpZUDr6UkZYJjcjjC0FWEJOJbyM3PTIwxucUmDG2A=="],
 
