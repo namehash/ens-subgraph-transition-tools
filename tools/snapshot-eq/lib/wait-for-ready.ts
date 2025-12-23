@@ -3,51 +3,29 @@ import { sleep } from "bun";
 import ProgressBar from "progress";
 import { getEnsnodeUrl } from "./helpers";
 
-export async function waitForPonderReady(networkId: string, targetBlockheight: number) {
+export async function waitForPonderReady(chainId: number, targetBlockheight: number) {
 	const client = new ENSNodeClient({ url: new URL(getEnsnodeUrl()) });
 
 	const getBlockheight = async () => {
 		const data = await client.indexingStatus();
 
-		switch (data.overallStatus) {
-			case "unstarted": {
-				return { ready: false, block: 0 };
+		switch (data.responseCode) {
+			case "error": {
+				throw new Error("Indexing Status Error");
 			}
-			case "indexer-error": {
-				throw new Error(`ENSIndexer Indexing Status Error: ${data}`);
-			}
-			case "following": {
-				throw new Error("ENSIndexer is following but shouldn't be in snapshot mode.");
-			}
-			case "backfill":
-			case "completed": {
-				const chainStatus = data.chains.get(Number(networkId));
-
-				if (!chainStatus) {
-					throw new Error(`Invariant: ENSIndexer is indexing ${networkId}`);
+			case "ok": {
+				const chain = data.realtimeProjection.snapshot.omnichainSnapshot.chains.get(chainId);
+				if (!chain) {
+					throw new Error(
+						`Chain 1 not found\n${JSON.stringify(data.realtimeProjection.snapshot.omnichainSnapshot.chains)}`,
+					);
 				}
 
-				if (chainStatus.config.endBlock?.number !== targetBlockheight) {
-					throw new Error(`Invariant: ENSIndexer must be indexing to ${targetBlockheight}`);
-				}
-
-				switch (chainStatus.status) {
-					case "unstarted": {
-						return { ready: false, block: 0 };
-					}
-					case "backfill": {
-						return { ready: false, block: chainStatus.latestIndexedBlock.number };
-					}
-					case "completed": {
-						// TODO: re-enable once ponder fixes the off-by-n-if-no-events issue
-						// if (chainStatus.latestIndexedBlock.number !== targetBlockheight) {
-						// 	throw new Error(
-						// 		`Invariant: ENSIndexer says chain ${networkId} is completed but latestIndexedBlock isn't ${targetBlockheight}: ${JSON.stringify(chainStatus)}`,
-						// 	);
-						// }
-						return { ready: true, block: targetBlockheight };
-					}
-				}
+				if (chain.chainStatus === "chain-queued") return { ready: false, block: 0 };
+				return {
+					ready: chain.latestIndexedBlock.number === targetBlockheight,
+					block: chain.latestIndexedBlock.number,
+				};
 			}
 		}
 	};

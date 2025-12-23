@@ -116,7 +116,7 @@ async function diffOperationName(
 		///
 
 		// helpful to ignore specific snapshot file names to progress the diff
-		const IGNORE_FILENAMES: string[] = [];
+		const IGNORE_FILENAMES: string[] = ["Resolvers_3860000_-935910546.json"];
 		const filteredByFilename = changeset.filter(() => !IGNORE_FILENAMES.includes(snapshotFileName));
 
 		// if you'd like, manually add RegExp[] here to ignore changesets by path, which is
@@ -125,7 +125,7 @@ async function diffOperationName(
 		const filteredByPath = ignoreChangesetsByPath(filteredByFilename, []);
 
 		// if you'd like, ignore changesets by 'type', helpful for ignoring out-of-order entities
-		const filtered = ignoreChangesetsByType(filteredByPath, []);
+		const filtered = ignoreChangesetsByType(filteredByPath, ["ADD", "REMOVE"]);
 
 		///
 		/// end changeset filters

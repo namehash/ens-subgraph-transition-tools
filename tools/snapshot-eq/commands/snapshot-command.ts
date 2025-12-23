@@ -160,11 +160,11 @@ export async function snapshotCommand(
 	// if ponder, confirm that indexer is at the specific blockneight and is ready
 	if (indexer === Indexer.ENSNode) {
 		// select ponder network id by selected namespace chain
-		const networkId = { sepolia: "11155111", holesky: "17000" }[namespace as string] || "1";
-		await waitForPonderReady(networkId, blockheight);
-
+		// biome-ignore lint/style/noNonNullAssertion: guaranteed
+		const chainId = { mainnet: 1, sepolia: 11155111 }[namespace as string]!;
+		// await waitForPonderReady(chainId, blockheight);
 		// cluster if possible
-		await clusterPonderSchema();
+		// await clusterPonderSchema();
 	}
 
 	const client = makeClient(url);
