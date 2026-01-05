@@ -1,10 +1,10 @@
-import { Indexer } from "@/lib/types";
+import { type ENSNamespaceId, ENSNamespaceIds } from "@ensnode/datasources";
 import yargs from "yargs/yargs";
 
 import { cleanCommand } from "@/commands/clean-command";
 import { diffCommand } from "@/commands/diff-command";
 import { snapshotCommand } from "@/commands/snapshot-command";
-import { type ENSNamespaceId, ENSNamespaceIds } from "@ensnode/datasources";
+import { Indexer } from "@/lib/types";
 
 yargs(process.argv.slice(2))
 	.scriptName("snapshot-eq")

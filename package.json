@@ -3,12 +3,16 @@
 	"private": true,
 	"scripts": {
 		"lint": "biome check --write .",
-		"proxy:dev": "bun --filter proxy-eq dev",
 		"snapshot:dev": "bun --filter snapshot-eq dev",
-		"snapshot-eq": "bun --filter snapshot-eq --elide-lines 0 start"
+		"snapshot-eq": "bun --filter snapshot-eq --elide-lines 0 start",
+		"resolution:dev": "bun --filter resolution-eq dev",
+		"resolution-eq": "bun --filter resolution-eq --elide-lines 0 start"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.9.4"
+		"@biomejs/biome": "^2.3.11"
 	},
-	"workspaces": ["packages/*", "tools/*"]
+	"workspaces": [
+		"packages/*",
+		"tools/*"
+	]
 }

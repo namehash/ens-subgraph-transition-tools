@@ -1,5 +1,5 @@
 {
-	"name": "api-eq",
+	"name": "resolution-eq",
 	"private": true,
 	"module": "index.ts",
 	"type": "module",
@@ -8,10 +8,13 @@
 		"dev": "bun run --env-file ../../.env.local --watch index.ts"
 	},
 	"dependencies": {
-		"eq-lib": "workspace:*"
+		"eq-lib": "workspace:*",
+		"viem": "^2.23.10",
+		"yargs": "^18.0.0"
 	},
 	"devDependencies": {
-		"@types/bun": "latest"
+		"@types/bun": "latest",
+		"@types/yargs": "^17.0.35"
 	},
 	"peerDependencies": {
 		"typescript": "^5.0.0"

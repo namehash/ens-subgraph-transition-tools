@@ -1,13 +1,12 @@
-import { Indexer } from "@/lib/types";
-
 import { resolve } from "node:path";
-import { getFirstOperationName } from "@/lib/helpers";
-import { getSnapshot, makeSnapshotDirectoryPath } from "@/lib/snapshots";
-import { ALL_QUERIES } from "@/queries";
 import type { ENSNamespaceId } from "@ensnode/datasources";
 import { Glob } from "bun";
 import { atomizeChangeset, diff } from "json-diff-ts";
 import ProgressBar from "progress";
+import { getFirstOperationName } from "@/lib/helpers";
+import { getSnapshot, makeSnapshotDirectoryPath } from "@/lib/snapshots";
+import { Indexer } from "@/lib/types";
+import { ALL_QUERIES } from "@/queries";
 
 // biome-ignore lint/suspicious/noExplicitAny: honestly easiest type
 function diffSnapshots(a: any, b: any) {
@@ -84,7 +83,7 @@ async function diffOperationName(
 		let changeset: ReturnType<typeof diffSnapshots>;
 		try {
 			changeset = diffSnapshots(subgraphSnapshot, ponderSnapshot);
-		} catch (error) {
+		} catch (_error) {
 			// an error here means that the diffJson lib failed, so they're definitely not equal
 			console.error(
 				`Difference found in ${snapshotFileName} (likely missing object sub-field in ponder snapshot)`,

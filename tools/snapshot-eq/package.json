@@ -19,13 +19,13 @@
 		"pg": "^8.16.0",
 		"progress": "^2.0.3",
 		"viem": "^2.23.10",
-		"yargs": "^17.7.2"
+		"yargs": "^18.0.0"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
 		"@types/pg": "^8.15.2",
 		"@types/progress": "^2.0.7",
-		"@types/yargs": "^17.0.33"
+		"@types/yargs": "^17.0.35"
 	},
 	"peerDependencies": {
 		"typescript": "^5.0.0"

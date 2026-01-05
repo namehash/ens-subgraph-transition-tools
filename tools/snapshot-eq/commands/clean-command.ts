@@ -1,8 +1,7 @@
 import { rm } from "node:fs/promises";
-
+import type { ENSNamespaceId } from "@ensnode/datasources";
 import { makeSnapshotDirectoryPath } from "@/lib/snapshots";
 import type { Indexer } from "@/lib/types";
-import type { ENSNamespaceId } from "@ensnode/datasources";
 
 export async function cleanCommand(
 	namespace: ENSNamespaceId,

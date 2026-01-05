@@ -53,7 +53,7 @@ export function makeSnapshotPath({
 
 export function parseSnapshotName(name: string) {
 	const [operationName, offset, operationKey] = name.split("_");
-	return { operationName, offset: Number.parseInt(offset), operationKey };
+	return { operationName, offset: Number.parseInt(offset, 10), operationKey };
 }
 
 export async function hasSnapshot(path: string) {
