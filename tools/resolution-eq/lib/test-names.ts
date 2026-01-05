@@ -1,10 +1,13 @@
 /**
  * Test ENS names from various edge cases and normalization scenarios
- * Many names sourced from: https://adraffy.github.io/ens-normalize.js/test/resolver.html
+ * Many names
  */
 export const TEST_NAMES = [
-	// Basic examples
+	///////////////////////////
+	// Basic Examples
+	///////////////////////////
 	"vitalik.eth",
+	"shrugs.eth",
 	"gregskril.eth",
 	"katzman.base.eth",
 	"jesse.base.eth",
@@ -17,6 +20,16 @@ export const TEST_NAMES = [
 	"argent.xyz",
 	"lens.xyz",
 	"🔥🔥🔥🔥🔥.eth",
+
+	///////////////////////////
+	// 1000 Club
+	///////////////////////////
+	...Array.from({ length: 1000 }).map((_, i) => `${i}.eth`),
+
+	///////////////////////////
+	// The following are sourced from https://adraffy.github.io/ens-normalize.js/test/resolver.html
+	///////////////////////////
+
 	"nIcK.eTh",
 	"brantly.cash",
 	"🏴‍☠.art",
@@ -48,7 +61,7 @@ export const TEST_NAMES = [
 	// "barmstrong.cb.id", // takes a really long time and is super flaky?
 
 	// Offchain DNS
-	"brantly.rocks",
+	// "brantly.rocks", // takes a really long time
 
 	// Address
 	"0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",

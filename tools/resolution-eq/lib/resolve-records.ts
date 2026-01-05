@@ -1,5 +1,5 @@
 import { diff as _diff, atomizeChangeset, type IAtomicChange } from "json-diff-ts";
-import { createPublicClient, http } from "viem";
+import { ContractFunctionExecutionError, createPublicClient, http } from "viem";
 import { mainnet } from "viem/chains";
 
 export const diff = (a: unknown, b: unknown) =>
@@ -16,7 +16,14 @@ const TEXT_KEYS = [
 	"com.github",
 ];
 
-const COIN_TYPES = [60, 2147492101, 2147542792, 2147483658, 2147525809, 2148018000];
+const COIN_TYPES = [
+	60, //
+	2147492101,
+	2147542792,
+	2147483658,
+	2147525809,
+	2148018000,
+];
 
 // biome-ignore lint/style/noNonNullAssertion: shhh
 const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY!;
@@ -99,8 +106,12 @@ async function resolveWithUniversalResolver(name: string): Promise<TimedResult<R
 				key,
 			});
 			return { key, value };
-		} catch {
-			return { key, value: null };
+		} catch (error) {
+			if (error instanceof ContractFunctionExecutionError) {
+				return { key, value: null };
+			}
+
+			throw error;
 		}
 	});
 
@@ -112,8 +123,12 @@ async function resolveWithUniversalResolver(name: string): Promise<TimedResult<R
 				coinType,
 			});
 			return { coinType, value };
-		} catch {
-			return { coinType, value: null };
+		} catch (error) {
+			if (error instanceof ContractFunctionExecutionError) {
+				return { coinType, value: null };
+			}
+
+			throw error;
 		}
 	});
 

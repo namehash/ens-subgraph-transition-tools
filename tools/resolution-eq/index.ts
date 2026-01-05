@@ -58,6 +58,11 @@ yargs(process.argv.slice(2))
 				total: TEST_NAMES.length,
 			});
 
+			let totalAcceleratedTime = 0;
+			let totalUnacceleratedTime = 0;
+			let totalUniversalResolverTime = 0;
+			let successfulResolutions = 0;
+
 			for (const name of TEST_NAMES) {
 				bar.tick({ name });
 
@@ -71,7 +76,21 @@ yargs(process.argv.slice(2))
 					continue;
 				}
 
-				const { accelerated, unaccelerated, universalResolver, diffs } = await resolveRecords(name);
+				let result: Awaited<ReturnType<typeof resolveRecords>>;
+				try {
+					result = await resolveRecords(name);
+				} catch (error) {
+					bar.interrupt(String(error));
+					continue;
+				}
+
+				const { accelerated, unaccelerated, universalResolver, diffs } = result;
+
+				// Track timings
+				totalAcceleratedTime += accelerated.duration;
+				totalUnacceleratedTime += unaccelerated.duration;
+				totalUniversalResolverTime += universalResolver.duration;
+				successfulResolutions++;
 
 				// Check if there are any diffs
 				const hasAcceleratedDiff = diffs.accelerated.length > 0;
@@ -115,6 +134,34 @@ yargs(process.argv.slice(2))
 			bar.terminate();
 
 			console.log("\n\n✅ All tests passed! No diffs detected.");
+
+			if (successfulResolutions > 0) {
+				const avgAccelerated = totalAcceleratedTime / successfulResolutions;
+				const avgUnaccelerated = totalUnacceleratedTime / successfulResolutions;
+				const avgUniversalResolver = totalUniversalResolverTime / successfulResolutions;
+
+				console.log("\n--- Average Timings ---");
+				console.log(
+					`ENSNode API (accelerated):      ${avgAccelerated.toFixed(2)}ms (avg over ${successfulResolutions} names)`,
+				);
+				console.log(
+					`ENSNode API (unaccelerated):    ${avgUnaccelerated.toFixed(2)}ms (avg over ${successfulResolutions} names)`,
+				);
+				console.log(
+					`Universal Resolver (viem):      ${avgUniversalResolver.toFixed(2)}ms (avg over ${successfulResolutions} names)`,
+				);
+
+				console.log("\n--- Speedup vs Universal Resolver ---");
+				const acceleratedSpeedup = avgUniversalResolver / avgAccelerated;
+				const unacceleratedSpeedup = avgUniversalResolver / avgUnaccelerated;
+
+				console.log(
+					`Accelerated:    ${acceleratedSpeedup.toFixed(2)}x ${acceleratedSpeedup > 1 ? "faster" : "slower"}`,
+				);
+				console.log(
+					`Unaccelerated:  ${unacceleratedSpeedup.toFixed(2)}x ${unacceleratedSpeedup > 1 ? "faster" : "slower"}`,
+				);
+			}
 		},
 	)
 	.strict()
