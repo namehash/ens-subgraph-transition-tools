@@ -1,9 +1,9 @@
 import type { ENSNamespaceId } from "@ensnode/datasources";
 import { type Client, createRequest, type TypedDocumentNode } from "@urql/core";
-import { makeClient } from "eq-lib";
 import { print } from "graphql";
 import PQueue from "p-queue";
 import ProgressBar from "progress";
+import { makeClient } from "@/lib/client";
 import { getTotalCount } from "@/lib/get-total-count";
 import {
 	getEnsnodeUrl,

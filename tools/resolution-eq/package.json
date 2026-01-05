@@ -8,12 +8,14 @@
 		"dev": "bun run --env-file ../../.env.local --watch index.ts"
 	},
 	"dependencies": {
-		"eq-lib": "workspace:*",
+		"json-diff-ts": "^4.1.0",
+		"progress": "^2.0.3",
 		"viem": "^2.23.10",
 		"yargs": "^18.0.0"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
+		"@types/progress": "^2.0.7",
 		"@types/yargs": "^17.0.35"
 	},
 	"peerDependencies": {
