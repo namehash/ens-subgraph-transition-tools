@@ -1,35 +1,9 @@
 /**
- * Test ENS names from various edge cases and normalization scenarios
- * Many names
+ * These names test various resolution and normalization behaviors.
+ *
+ * @see https://adraffy.github.io/ens-normalize.js/test/resolver.html
  */
-export const TEST_NAMES = [
-	///////////////////////////
-	// Basic Examples
-	///////////////////////////
-	"vitalik.eth",
-	"shrugs.eth",
-	"gregskril.eth",
-	"katzman.base.eth",
-	"jesse.base.eth",
-	"alain.linea.eth",
-	"goinfrex.linea.eth",
-	"jesse.base.eth",
-	"gift.box",
-	"brantly.eth",
-	"lightwalker.eth",
-	"argent.xyz",
-	"lens.xyz",
-	"🔥🔥🔥🔥🔥.eth",
-
-	///////////////////////////
-	// 1000 Club
-	///////////////////////////
-	...Array.from({ length: 1000 }).map((_, i) => `${i}.eth`),
-
-	///////////////////////////
-	// The following are sourced from https://adraffy.github.io/ens-normalize.js/test/resolver.html
-	///////////////////////////
-
+export const RAFFY_NAMES = [
 	"nIcK.eTh",
 	"brantly.cash",
 	"🏴‍☠.art",
