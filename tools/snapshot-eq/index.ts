@@ -28,6 +28,11 @@ yargs(process.argv.slice(2))
 					choices: Object.values(Indexer),
 					description: "Indexer to snapshot from",
 					demandOption: true,
+				})
+				.option("no-cluster", {
+					type: "boolean",
+					description: "Skip database clustering optimization",
+					default: false,
 				});
 		},
 		async (argv) => {
@@ -35,6 +40,7 @@ yargs(process.argv.slice(2))
 				argv.namespace as ENSNamespaceId,
 				argv.blockheight,
 				argv.indexer as Indexer,
+				!argv.noCluster,
 			);
 		},
 	)

@@ -4,6 +4,7 @@ import { print } from "graphql";
 import PQueue from "p-queue";
 import ProgressBar from "progress";
 import { makeClient } from "@/lib/client";
+import { clusterPonderSchema } from "@/lib/cluster-db";
 import { getTotalCount } from "@/lib/get-total-count";
 import {
 	getEnsnodeUrl,
@@ -14,6 +15,7 @@ import {
 import { hasSnapshot, makeSnapshotPath, persistSnapshot } from "@/lib/snapshots";
 import { injectSubgraphBlockHeightArgument } from "@/lib/subgraph-ops";
 import { Indexer } from "@/lib/types";
+import { waitForPonderReady } from "@/lib/wait-for-ready";
 import { ALL_QUERIES } from "@/queries";
 
 // subgraph (& ponder) have hard limit of 1000 for plural field `first`
@@ -147,6 +149,7 @@ export async function snapshotCommand(
 	namespace: ENSNamespaceId,
 	blockheight: number,
 	indexer: Indexer,
+	cluster = true,
 ) {
 	const url =
 		indexer === Indexer.ENSNode
@@ -157,10 +160,10 @@ export async function snapshotCommand(
 	if (indexer === Indexer.ENSNode) {
 		// select ponder network id by selected namespace chain
 		// biome-ignore lint/style/noNonNullAssertion: guaranteed
-		const _chainId = { mainnet: 1, sepolia: 11155111 }[namespace as string]!;
-		// await waitForPonderReady(_chainId, blockheight);
-		// cluster if possible
-		// await clusterPonderSchema();
+		const chainId = { mainnet: 1, sepolia: 11155111 }[namespace as string]!;
+		await waitForPonderReady(chainId, blockheight);
+		// cluster if desired
+		if (cluster) await clusterPonderSchema();
 	}
 
 	const client = makeClient(url);
