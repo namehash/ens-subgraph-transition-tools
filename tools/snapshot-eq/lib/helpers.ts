@@ -7,8 +7,6 @@ export const makeSubgraphUrl = (namespace: ENSNamespaceId, apiKey: string) => {
 			return "https://graphnode.namehashlabs.org:8000/subgraphs/name/namehash/ens-subgraph-mainnet";
 		case "sepolia":
 			return "https://graphnode.namehashlabs.org:8000/subgraphs/name/namehash/ens-subgraph-3";
-		case "holesky":
-			return "https://graphnode.namehashlabs.org:8000/subgraphs/name/namehash/ens-subgraph-holesky";
 		default:
 			throw new Error(`Unsupported --namespace: ${namespace}`);
 	}

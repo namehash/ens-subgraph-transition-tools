@@ -13,5 +13,8 @@
 	},
 	"workspaces": [
 		"tools/*"
-	]
+	],
+	"resolutions": {
+		"@urql/core": "5.1.0"
+	}
 }

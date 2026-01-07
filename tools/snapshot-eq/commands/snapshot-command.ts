@@ -68,7 +68,8 @@ async function paginateParallel(
 	// TODO: integrate AbortController (?)
 	const queue = new PQueue({
 		// both, NameHash GraphNode, and ENSNode are not distributed
-		concurrency: 1
+		// TODO: if we query against TheGraph again, we can switch this back to 10
+		concurrency: 1,
 	});
 
 	const totalPages = Math.ceil(numRecords / BATCH_SIZE);
