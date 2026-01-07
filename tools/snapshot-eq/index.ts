@@ -40,7 +40,7 @@ yargs(process.argv.slice(2))
 				argv.namespace as ENSNamespaceId,
 				argv.blockheight,
 				argv.indexer as Indexer,
-				!argv.noCluster,
+				argv.cluster,
 			);
 		},
 	)
