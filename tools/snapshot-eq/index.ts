@@ -19,6 +19,11 @@ yargs(process.argv.slice(2))
 		"Take snapshot of subgraph state at blockheight",
 		(yargs) => {
 			return yargs
+				.option("cluster", {
+					type: "boolean",
+					description: "Cluster the databse before snapshotting",
+					default: true,
+				})
 				.positional("blockheight", {
 					type: "number",
 					description: "Block height to snapshot",
@@ -28,11 +33,6 @@ yargs(process.argv.slice(2))
 					choices: Object.values(Indexer),
 					description: "Indexer to snapshot from",
 					demandOption: true,
-				})
-				.option("no-cluster", {
-					type: "boolean",
-					description: "Skip database clustering optimization",
-					default: false,
 				});
 		},
 		async (argv) => {
