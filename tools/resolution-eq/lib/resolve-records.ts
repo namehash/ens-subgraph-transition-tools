@@ -63,6 +63,7 @@ async function resolveWithENSNode(
 	accelerate: boolean,
 ): Promise<TimedResult<RecordsResponse>> {
 	const url = `${ENSNODE_URL}/api/resolve/records/${name}?${new URLSearchParams({
+		name: "true",
 		addresses: COIN_TYPES.join(","),
 		texts: TEXT_KEYS.join(","),
 		accelerate: accelerate ? "true" : "false",

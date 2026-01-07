@@ -1,6 +1,7 @@
 import pRetry from "p-retry";
 import ProgressBar from "progress";
 import { normalize } from "viem/ens";
+import { ARGENT_NAMES } from "@/lib/names/argent-names";
 import { BASENAMES_NAMES } from "@/lib/names/basenames-names";
 import { CUSTOM_RESOLVER_NAMES } from "@/lib/names/custom-resolver-names";
 import { ENSADMIN_NAMES } from "@/lib/names/ensadmin-names";
@@ -14,6 +15,7 @@ import { UNMIGRATED_NAMES } from "@/lib/names/unmigrated-names";
 import { resolveRecords } from "@/lib/resolve-records";
 
 const ALL_NAMES = [
+	...ARGENT_NAMES,
 	...THOUSAND_CLUB_NAMES,
 	...BASENAMES_NAMES,
 	...CUSTOM_RESOLVER_NAMES,

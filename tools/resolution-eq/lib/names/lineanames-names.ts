@@ -29,6 +29,9 @@
  * LIMIT 30;
  */
 export const LINEANAMES_NAMES = [
+	//////////////////////////
+	// Linea Names
+	//////////////////////////
 	"54r4r4.linea.eth",
 	"56r4r32.linea.eth",
 	"iguanter.linea.eth",
@@ -58,4 +61,18 @@ export const LINEANAMES_NAMES = [
 	"aguskar.linea.eth",
 	"1x7.linea.eth",
 	"153553.linea.eth",
+
+	//////////////////////////
+	// Linea Default Reverse Resolver (0x86c5aed9f27837074612288610fb98ccc1733126)
+	//////////////////////////
+	"3b410ff9c37bc464be428d45c47ae8fceda3419a.addr.reverse",
+	"c49534e61947e2de59242109ede06f2a3e08c33c.addr.reverse",
+	"5458d062b2dc7056e0692f8bc33c736919906e0f.addr.reverse",
+	"535c9f2ffd08a687f9c4087546eac8a7b077e614.addr.reverse",
+	"2f1aaf2679cf6e31018280f7285f67ea92382934.addr.reverse",
+	"52460be8521a8a3ad20d11d737e813a8ecb2a202.addr.reverse",
+	"59c3bccae50c0664d66efda1c340185d66634930.addr.reverse",
+	"560626a054ba0d7853784b1f6c3e706d56f1fb5c.addr.reverse",
+	"5019fd9d033d5b6e1cd86c9a56376c72bee7a46c.addr.reverse",
+	"e11e87a71084fa6b59eadfca92d68202495c6507.addr.reverse",
 ];
