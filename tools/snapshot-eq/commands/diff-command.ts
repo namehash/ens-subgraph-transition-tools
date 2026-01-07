@@ -121,7 +121,9 @@ async function diffOperationName(
 		// if you'd like, manually add RegExp[] here to ignore changesets by path, which is
 		// helpful for manually continuing the diff job once a pattern has been identified
 		// i.e. ignore all diffs related to a Domain.wrappedDomain.id: /\.wrappedDomain\.id$/
-		const filteredByPath = ignoreChangesetsByPath(filteredByFilename, []);
+		const filteredByPath = ignoreChangesetsByPath(filteredByFilename, [
+			// /\.__typename$/
+		]);
 
 		// if you'd like, ignore changesets by 'type', helpful for ignoring out-of-order entities
 		const filtered = ignoreChangesetsByType(filteredByPath, []);
