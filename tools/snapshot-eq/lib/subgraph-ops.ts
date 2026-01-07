@@ -7,11 +7,9 @@ export function injectSubgraphBlockHeightArgument(query: TypedDocumentNode, bloc
 	// of the query
 
 	const newQuery = { ...query };
-	// biome-ignore lint/performance/noDelete: <explanation>
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	// biome-ignore lint/suspicious/noExplicitAny: required to delete urql internal cache keys
 	delete (newQuery as any).__key;
-	// biome-ignore lint/performance/noDelete: <explanation>
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	// biome-ignore lint/suspicious/noExplicitAny: required to delete urql internal cache keys
 	delete (newQuery as any).loc;
 
 	return visit(newQuery, {

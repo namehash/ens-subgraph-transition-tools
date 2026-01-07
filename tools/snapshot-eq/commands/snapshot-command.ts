@@ -1,8 +1,11 @@
-import { type Client, type TypedDocumentNode, createRequest } from "@urql/core";
-import { makeClient } from "eq-lib";
+import type { ENSNamespaceId } from "@ensnode/datasources";
+import { type Client, createRequest, type TypedDocumentNode } from "@urql/core";
+import { print } from "graphql";
 import PQueue from "p-queue";
 import ProgressBar from "progress";
-
+import { makeClient } from "@/lib/client";
+import { clusterPonderSchema } from "@/lib/cluster-db";
+import { getTotalCount } from "@/lib/get-total-count";
 import {
 	getEnsnodeUrl,
 	getFirstOperationName,
@@ -10,15 +13,10 @@ import {
 	makeSubgraphUrl,
 } from "@/lib/helpers";
 import { hasSnapshot, makeSnapshotPath, persistSnapshot } from "@/lib/snapshots";
-import { print } from "graphql";
-
-import { clusterPonderSchema } from "@/lib/cluster-db";
-import { getTotalCount } from "@/lib/get-total-count";
 import { injectSubgraphBlockHeightArgument } from "@/lib/subgraph-ops";
 import { Indexer } from "@/lib/types";
 import { waitForPonderReady } from "@/lib/wait-for-ready";
 import { ALL_QUERIES } from "@/queries";
-import type { ENSNamespaceId } from "@ensnode/datasources";
 
 // subgraph (& ponder) have hard limit of 1000 for plural field `first`
 const BATCH_SIZE = 1000;
@@ -151,6 +149,7 @@ export async function snapshotCommand(
 	namespace: ENSNamespaceId,
 	blockheight: number,
 	indexer: Indexer,
+	cluster = true,
 ) {
 	const url =
 		indexer === Indexer.ENSNode
@@ -162,9 +161,9 @@ export async function snapshotCommand(
 		// select ponder network id by selected namespace chain
 		// biome-ignore lint/style/noNonNullAssertion: guaranteed
 		const chainId = { mainnet: 1, sepolia: 11155111 }[namespace as string]!;
-		// await waitForPonderReady(chainId, blockheight);
-		// cluster if possible
-		// await clusterPonderSchema();
+		await waitForPonderReady(chainId, blockheight);
+		// cluster if desired
+		if (cluster) await clusterPonderSchema();
 	}
 
 	const client = makeClient(url);

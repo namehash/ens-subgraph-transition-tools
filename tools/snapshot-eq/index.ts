@@ -1,10 +1,10 @@
-import { Indexer } from "@/lib/types";
+import { type ENSNamespaceId, ENSNamespaceIds } from "@ensnode/datasources";
 import yargs from "yargs/yargs";
 
 import { cleanCommand } from "@/commands/clean-command";
 import { diffCommand } from "@/commands/diff-command";
 import { snapshotCommand } from "@/commands/snapshot-command";
-import { type ENSNamespaceId, ENSNamespaceIds } from "@ensnode/datasources";
+import { Indexer } from "@/lib/types";
 
 yargs(process.argv.slice(2))
 	.scriptName("snapshot-eq")
@@ -19,6 +19,11 @@ yargs(process.argv.slice(2))
 		"Take snapshot of subgraph state at blockheight",
 		(yargs) => {
 			return yargs
+				.option("cluster", {
+					type: "boolean",
+					description: "Cluster the databse before snapshotting",
+					default: true,
+				})
 				.positional("blockheight", {
 					type: "number",
 					description: "Block height to snapshot",
@@ -35,6 +40,7 @@ yargs(process.argv.slice(2))
 				argv.namespace as ENSNamespaceId,
 				argv.blockheight,
 				argv.indexer as Indexer,
+				argv.cluster,
 			);
 		},
 	)

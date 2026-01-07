@@ -1,13 +1,12 @@
-import { Indexer } from "@/lib/types";
-
 import { resolve } from "node:path";
-import { getFirstOperationName } from "@/lib/helpers";
-import { getSnapshot, makeSnapshotDirectoryPath } from "@/lib/snapshots";
-import { ALL_QUERIES } from "@/queries";
 import type { ENSNamespaceId } from "@ensnode/datasources";
 import { Glob } from "bun";
 import { atomizeChangeset, diff } from "json-diff-ts";
 import ProgressBar from "progress";
+import { getFirstOperationName } from "@/lib/helpers";
+import { getSnapshot, makeSnapshotDirectoryPath } from "@/lib/snapshots";
+import { Indexer } from "@/lib/types";
+import { ALL_QUERIES } from "@/queries";
 
 // biome-ignore lint/suspicious/noExplicitAny: honestly easiest type
 function diffSnapshots(a: any, b: any) {
@@ -84,7 +83,7 @@ async function diffOperationName(
 		let changeset: ReturnType<typeof diffSnapshots>;
 		try {
 			changeset = diffSnapshots(subgraphSnapshot, ponderSnapshot);
-		} catch (error) {
+		} catch (_error) {
 			// an error here means that the diffJson lib failed, so they're definitely not equal
 			console.error(
 				`Difference found in ${snapshotFileName} (likely missing object sub-field in ponder snapshot)`,
@@ -116,16 +115,18 @@ async function diffOperationName(
 		///
 
 		// helpful to ignore specific snapshot file names to progress the diff
-		const IGNORE_FILENAMES: string[] = ["Resolvers_3860000_-935910546.json"];
+		const IGNORE_FILENAMES: string[] = [];
 		const filteredByFilename = changeset.filter(() => !IGNORE_FILENAMES.includes(snapshotFileName));
 
 		// if you'd like, manually add RegExp[] here to ignore changesets by path, which is
 		// helpful for manually continuing the diff job once a pattern has been identified
 		// i.e. ignore all diffs related to a Domain.wrappedDomain.id: /\.wrappedDomain\.id$/
-		const filteredByPath = ignoreChangesetsByPath(filteredByFilename, []);
+		const filteredByPath = ignoreChangesetsByPath(filteredByFilename, [
+			// /\.__typename$/
+		]);
 
 		// if you'd like, ignore changesets by 'type', helpful for ignoring out-of-order entities
-		const filtered = ignoreChangesetsByType(filteredByPath, ["ADD", "REMOVE"]);
+		const filtered = ignoreChangesetsByType(filteredByPath, []);
 
 		///
 		/// end changeset filters
