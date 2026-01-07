@@ -1,34 +1,36 @@
-import { PonderMeta } from "@/queries/PonderMeta";
+import { ENSNodeClient } from "@ensnode/ensnode-sdk";
 import { sleep } from "bun";
-import { makeClient } from "eq-lib";
 import ProgressBar from "progress";
 import { getEnsnodeUrl } from "./helpers";
 
-export async function waitForPonderReady(networkId: string, targetBlockheight: number) {
-	const ponderApiClient = makeClient(`${getEnsnodeUrl()}/ponder`);
-	/**
-	 * Check if the Ponder API is ready (backfill complete across all chains).
-	 */
-	const isPonderApiReady = async () => fetch(`${getEnsnodeUrl()}/ready`).then((res) => res.ok);
+export async function waitForPonderReady(chainId: number, targetBlockheight: number) {
+	const client = new ENSNodeClient({ url: new URL(getEnsnodeUrl()) });
 
 	const getBlockheight = async () => {
-		const { data } = await ponderApiClient.query(PonderMeta);
+		const data = await client.indexingStatus();
 
-		if (!data) throw new Error("ENSIndexer API unavailable!");
+		switch (data.responseCode) {
+			case "error": {
+				throw new Error("Indexing Status Error");
+			}
+			case "ok": {
+				const chain = data.realtimeProjection.snapshot.omnichainSnapshot.chains.get(chainId);
+				if (!chain) {
+					throw new Error(
+						`Chain 1 not found\n${JSON.stringify(data.realtimeProjection.snapshot.omnichainSnapshot.chains)}`,
+					);
+				}
 
-		try {
-			const {
-				block: { number: ponderBlockheight },
-			} = data._meta.status[networkId];
-
-			return ponderBlockheight;
-		} catch (error) {
-			console.log(data);
-			throw error;
+				if (chain.chainStatus === "chain-queued") return { ready: false, block: 0 };
+				return {
+					ready: chain.latestIndexedBlock.number === targetBlockheight,
+					block: chain.latestIndexedBlock.number,
+				};
+			}
 		}
 	};
 
-	let currentBlockheight = await getBlockheight();
+	let { block: currentBlockheight } = await getBlockheight();
 
 	const bar = new ProgressBar(
 		"Indexing [:bar] :current/:total blocks (:percent) - :rate blocks/sec - :etas remaining",
@@ -41,11 +43,11 @@ export async function waitForPonderReady(networkId: string, targetBlockheight: n
 	);
 
 	while (true) {
-		const [ready, curr] = await Promise.all([isPonderApiReady(), getBlockheight()]);
+		const { ready, block: curr } = await getBlockheight();
 
 		// error check
 		if (curr > targetBlockheight) {
-			throw new Error(`ENSIndexer indexed further than expected ${targetBlockheight}!`);
+			throw new Error(`ENSIndexer indexed further (${curr}) than expected ${targetBlockheight}!`);
 		}
 
 		// huzzah

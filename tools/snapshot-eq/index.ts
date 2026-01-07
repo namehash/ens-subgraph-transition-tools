@@ -1,17 +1,17 @@
-import { Indexer } from "@/lib/types";
+import { type ENSNamespaceId, ENSNamespaceIds } from "@ensnode/datasources";
 import yargs from "yargs/yargs";
 
 import { cleanCommand } from "@/commands/clean-command";
 import { diffCommand } from "@/commands/diff-command";
 import { snapshotCommand } from "@/commands/snapshot-command";
-import type { ENSDeploymentChain } from "@ensnode/ens-deployments";
+import { Indexer } from "@/lib/types";
 
 yargs(process.argv.slice(2))
 	.scriptName("snapshot-eq")
-	.option("deployment", {
+	.option("namespace", {
 		type: "string",
-		description: "ENS deployment chain",
-		default: "mainnet",
+		description: "ENS Namespace",
+		default: ENSNamespaceIds.Mainnet,
 		global: true,
 	})
 	.command(
@@ -19,6 +19,11 @@ yargs(process.argv.slice(2))
 		"Take snapshot of subgraph state at blockheight",
 		(yargs) => {
 			return yargs
+				.option("cluster", {
+					type: "boolean",
+					description: "Cluster the databse before snapshotting",
+					default: true,
+				})
 				.positional("blockheight", {
 					type: "number",
 					description: "Block height to snapshot",
@@ -32,9 +37,10 @@ yargs(process.argv.slice(2))
 		},
 		async (argv) => {
 			await snapshotCommand(
-				argv.deployment as ENSDeploymentChain,
+				argv.namespace as ENSNamespaceId,
 				argv.blockheight,
 				argv.indexer as Indexer,
+				argv.cluster,
 			);
 		},
 	)
@@ -56,7 +62,7 @@ yargs(process.argv.slice(2))
 		},
 		async (argv) => {
 			await cleanCommand(
-				argv.deployment as ENSDeploymentChain,
+				argv.namespace as ENSNamespaceId,
 				argv.blockheight,
 				argv.indexer as Indexer,
 			);
@@ -73,7 +79,7 @@ yargs(process.argv.slice(2))
 			});
 		},
 		async (argv) => {
-			await diffCommand(argv.deployment as ENSDeploymentChain, argv.blockheight);
+			await diffCommand(argv.namespace as ENSNamespaceId, argv.blockheight);
 		},
 	)
 	.strict()

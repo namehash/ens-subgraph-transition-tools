@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 
-import type { ENSDeploymentChain } from "@ensnode/ens-deployments";
+import type { ENSNamespaceId } from "@ensnode/datasources";
 import type { Indexer } from "./types";
 
 // NOTE: don't love this, is there a better way to get to the root of the monorepo?
@@ -16,15 +16,15 @@ export interface Snapshot {
 }
 
 export function makeSnapshotDirectoryPath({
-	deploymentChain,
+	namespace,
 	blockheight,
 	indexer,
 }: {
-	deploymentChain: ENSDeploymentChain;
+	namespace: ENSNamespaceId;
 	blockheight: number;
 	indexer: Indexer;
 }) {
-	return resolve(projectRootDir, "snapshots", deploymentChain, blockheight.toString(), indexer);
+	return resolve(projectRootDir, "snapshots", namespace, blockheight.toString(), indexer);
 }
 
 /**
@@ -53,7 +53,7 @@ export function makeSnapshotPath({
 
 export function parseSnapshotName(name: string) {
 	const [operationName, offset, operationKey] = name.split("_");
-	return { operationName, offset: Number.parseInt(offset), operationKey };
+	return { operationName, offset: Number.parseInt(offset, 10), operationKey };
 }
 
 export async function hasSnapshot(path: string) {

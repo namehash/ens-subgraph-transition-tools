@@ -1,13 +1,12 @@
-import { Indexer } from "@/lib/types";
-
 import { resolve } from "node:path";
-import { getFirstOperationName } from "@/lib/helpers";
-import { getSnapshot, makeSnapshotDirectoryPath } from "@/lib/snapshots";
-import { ALL_QUERIES } from "@/queries";
-import type { ENSDeploymentChain } from "@ensnode/ens-deployments";
+import type { ENSNamespaceId } from "@ensnode/datasources";
 import { Glob } from "bun";
 import { atomizeChangeset, diff } from "json-diff-ts";
 import ProgressBar from "progress";
+import { getFirstOperationName } from "@/lib/helpers";
+import { getSnapshot, makeSnapshotDirectoryPath } from "@/lib/snapshots";
+import { Indexer } from "@/lib/types";
+import { ALL_QUERIES } from "@/queries";
 
 // biome-ignore lint/suspicious/noExplicitAny: honestly easiest type
 function diffSnapshots(a: any, b: any) {
@@ -32,17 +31,17 @@ function ignoreChangesetsByType<T extends { type: string }>(changesets: T[], typ
 
 async function diffOperationName(
 	operationName: string,
-	deploymentChain: ENSDeploymentChain,
+	namespace: ENSNamespaceId,
 	blockheight: number,
 ) {
 	const subgraphSnapshotDirectory = makeSnapshotDirectoryPath({
-		deploymentChain,
+		namespace: namespace,
 		blockheight,
 		indexer: Indexer.Subgraph,
 	});
 
 	const ponderSnapshotDirectory = makeSnapshotDirectoryPath({
-		deploymentChain,
+		namespace: namespace,
 		blockheight,
 		indexer: Indexer.ENSNode,
 	});
@@ -84,7 +83,7 @@ async function diffOperationName(
 		let changeset: ReturnType<typeof diffSnapshots>;
 		try {
 			changeset = diffSnapshots(subgraphSnapshot, ponderSnapshot);
-		} catch (error) {
+		} catch (_error) {
 			// an error here means that the diffJson lib failed, so they're definitely not equal
 			console.error(
 				`Difference found in ${snapshotFileName} (likely missing object sub-field in ponder snapshot)`,
@@ -122,13 +121,15 @@ async function diffOperationName(
 		// if you'd like, manually add RegExp[] here to ignore changesets by path, which is
 		// helpful for manually continuing the diff job once a pattern has been identified
 		// i.e. ignore all diffs related to a Domain.wrappedDomain.id: /\.wrappedDomain\.id$/
-		const filteredByPath = ignoreChangesetsByPath(filteredByFilename, []);
+		const filteredByPath = ignoreChangesetsByPath(filteredByFilename, [
+			// /\.__typename$/
+		]);
 
 		// if you'd like, ignore changesets by 'type', helpful for ignoring out-of-order entities
 		const filtered = ignoreChangesetsByType(filteredByPath, []);
 
 		///
-		/// end changeset filterd
+		/// end changeset filters
 		///
 
 		// they're equal, huzzah
@@ -144,10 +145,10 @@ async function diffOperationName(
 	}
 }
 
-export async function diffCommand(deploymentChain: ENSDeploymentChain, blockheight: number) {
+export async function diffCommand(namespace: ENSNamespaceId, blockheight: number) {
 	for (const [document] of ALL_QUERIES) {
 		const operationName = getFirstOperationName(document);
-		await diffOperationName(operationName, deploymentChain, blockheight);
+		await diffOperationName(operationName, namespace, blockheight);
 	}
 
 	console.log(`Diff(${blockheight}) — snapshots are identical.`);

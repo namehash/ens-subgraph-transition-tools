@@ -1,8 +1,8 @@
-import type { ENSDeploymentChain } from "@ensnode/ens-deployments";
+import type { ENSNamespaceId } from "@ensnode/datasources";
 import type { TypedDocumentNode } from "@urql/core";
 
-export const makeSubgraphUrl = (deploymentChain: ENSDeploymentChain, apiKey: string) => {
-	switch (deploymentChain) {
+export const makeSubgraphUrl = (namespace: ENSNamespaceId, apiKey: string) => {
+	switch (namespace) {
 		case "mainnet":
 			return "https://graphnode.namehashlabs.org:8000/subgraphs/name/namehash/ens-subgraph-mainnet";
 		case "sepolia":
@@ -10,7 +10,7 @@ export const makeSubgraphUrl = (deploymentChain: ENSDeploymentChain, apiKey: str
 		case "holesky":
 			return "https://graphnode.namehashlabs.org:8000/subgraphs/name/namehash/ens-subgraph-holesky";
 		default:
-			throw new Error(`Unsupported --deployment: ${deploymentChain}`);
+			throw new Error(`Unsupported --namespace: ${namespace}`);
 	}
 };
 

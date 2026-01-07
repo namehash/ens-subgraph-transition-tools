@@ -9,14 +9,14 @@ export async function clusterPonderSchema() {
 	}
 
 	await sql`
-        CREATE OR REPLACE FUNCTION cluster_all_tables() RETURNS void AS $$
+        CREATE OR REPLACE FUNCTION snapshot.cluster_all_tables() RETURNS void AS $$
         DECLARE
             table_record record;
             table_name_ident text; -- For use with format %I
             index_name_ident text; -- For use with format %I
             cluster_command text;
         BEGIN
-            -- Loop through tables in public schema that have a primary key
+            -- Loop through tables in snapshot schema that have a primary key
             -- and do not start with an underscore.
             FOR table_record IN
                 SELECT
@@ -27,7 +27,7 @@ export async function clusterPonderSchema() {
                 JOIN pg_index i ON i.indrelid = c.oid -- i is the pg_index entry for the index
                 WHERE
                     c.relkind = 'r'                           -- Regular tables only
-                    AND n.nspname = 'public'                  -- Only public schema
+                    AND n.nspname = 'snapshot'                  -- Only snapshot schema
                     AND LEFT(c.relname, 1) <> '_'             -- Exclude tables starting with underscore
                     AND i.indisprimary                        -- Primary key indexes only
                 ORDER BY c.relname
@@ -36,7 +36,7 @@ export async function clusterPonderSchema() {
                 index_name_ident := table_record.index_name;
 
                 IF index_name_ident IS NOT NULL AND index_name_ident <> '' THEN
-                    cluster_command := format('CLUSTER public.%I USING %I',
+                    cluster_command := format('CLUSTER snapshot.%I USING %I',
                                             table_name_ident,
                                             index_name_ident);
 
@@ -44,31 +44,31 @@ export async function clusterPonderSchema() {
 
                     BEGIN
                         EXECUTE cluster_command;
-                        RAISE NOTICE 'Successfully clustered table public.%I using index %I',
+                        RAISE NOTICE 'Successfully clustered table snapshot.%I using index %I',
                                     table_name_ident,
                                     index_name_ident;
                     EXCEPTION
                         WHEN OTHERS THEN
-                            RAISE WARNING 'Failed to CLUSTER table public.%I using index %I. SQLSTATE: %, SQLERRM: %',
+                            RAISE WARNING 'Failed to CLUSTER table snapshot.%I using index %I. SQLSTATE: %, SQLERRM: %',
                                         table_name_ident,
                                         index_name_ident,
                                         SQLSTATE,
                                         SQLERRM;
                     END;
                 ELSE
-                    RAISE NOTICE 'Skipping table public.%I - no valid primary key index name found after selection.',
+                    RAISE NOTICE 'Skipping table snapshot.%I - no valid primary key index name found after selection.',
                                 table_name_ident;
                 END IF;
             END LOOP;
-            RAISE NOTICE 'Finished attempting to cluster all applicable public tables.';
+            RAISE NOTICE 'Finished attempting to cluster all applicable snapshot tables.';
         END;
         $$ LANGUAGE plpgsql;
     `;
 	console.log("Function cluster_all_tables created/replaced successfully.");
 
-	console.log("Calling cluster_all_tables() to CLUSTER 'public' tables...");
+	console.log("Calling cluster_all_tables() to CLUSTER 'snapshot' tables...");
 	const startTime = performance.now();
-	await sql`SELECT cluster_all_tables();`;
+	await sql`SELECT snapshot.cluster_all_tables();`;
 
 	const duration = ((performance.now() - startTime) / 1000).toFixed(2);
 	console.log(`↳ CLUSTER operation attempt finished. Duration: ${duration}s`);

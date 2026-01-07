@@ -1,8 +1,11 @@
-import { type Client, type TypedDocumentNode, createRequest } from "@urql/core";
-import { makeClient } from "eq-lib";
+import type { ENSNamespaceId } from "@ensnode/datasources";
+import { type Client, createRequest, type TypedDocumentNode } from "@urql/core";
+import { print } from "graphql";
 import PQueue from "p-queue";
 import ProgressBar from "progress";
-
+import { makeClient } from "@/lib/client";
+import { clusterPonderSchema } from "@/lib/cluster-db";
+import { getTotalCount } from "@/lib/get-total-count";
 import {
 	getEnsnodeUrl,
 	getFirstOperationName,
@@ -10,15 +13,10 @@ import {
 	makeSubgraphUrl,
 } from "@/lib/helpers";
 import { hasSnapshot, makeSnapshotPath, persistSnapshot } from "@/lib/snapshots";
-import { print } from "graphql";
-
-import { clusterPonderSchema } from "@/lib/cluster-db";
-import { getTotalCount } from "@/lib/get-total-count";
 import { injectSubgraphBlockHeightArgument } from "@/lib/subgraph-ops";
 import { Indexer } from "@/lib/types";
 import { waitForPonderReady } from "@/lib/wait-for-ready";
 import { ALL_QUERIES } from "@/queries";
-import type { ENSDeploymentChain } from "@ensnode/ens-deployments";
 
 // subgraph (& ponder) have hard limit of 1000 for plural field `first`
 const BATCH_SIZE = 1000;
@@ -58,7 +56,7 @@ async function paginateParallel(
 	client: Client,
 	indexer: Indexer,
 	query: TypedDocumentNode,
-	deploymentChain: ENSDeploymentChain,
+	namespace: ENSNamespaceId,
 	blockheight: number,
 	numRecords: number,
 ) {
@@ -86,7 +84,7 @@ async function paginateParallel(
 				variables,
 				operationKey,
 				snapshotPath: makeSnapshotPath({
-					deploymentChain,
+					namespace,
 					blockheight,
 					indexer,
 					operationName,
@@ -148,23 +146,24 @@ async function paginateParallel(
 }
 
 export async function snapshotCommand(
-	deploymentChain: ENSDeploymentChain,
+	namespace: ENSNamespaceId,
 	blockheight: number,
 	indexer: Indexer,
+	cluster = true,
 ) {
 	const url =
 		indexer === Indexer.ENSNode
 			? `${getEnsnodeUrl()}/subgraph`
-			: makeSubgraphUrl(deploymentChain, getSubgraphApiKey());
+			: makeSubgraphUrl(namespace, getSubgraphApiKey());
 
 	// if ponder, confirm that indexer is at the specific blockneight and is ready
 	if (indexer === Indexer.ENSNode) {
-		// select ponder network id by selected deployment chain
-		const networkId = { sepolia: "11155111", holesky: "17000" }[deploymentChain as string] || "1";
-		await waitForPonderReady(networkId, blockheight);
-
-		// cluster if possible
-		await clusterPonderSchema();
+		// select ponder network id by selected namespace chain
+		// biome-ignore lint/style/noNonNullAssertion: guaranteed
+		const chainId = { mainnet: 1, sepolia: 11155111 }[namespace as string]!;
+		await waitForPonderReady(chainId, blockheight);
+		// cluster if desired
+		if (cluster) await clusterPonderSchema();
 	}
 
 	const client = makeClient(url);
@@ -198,14 +197,7 @@ export async function snapshotCommand(
 		});
 		console.log(`TotalCount(${operationName}) — ${totalRecordCount}`);
 
-		await paginateParallel(
-			client,
-			indexer,
-			document,
-			deploymentChain,
-			blockheight,
-			totalRecordCount,
-		);
+		await paginateParallel(client, indexer, document, namespace, blockheight, totalRecordCount);
 		console.log("\n");
 	}
 

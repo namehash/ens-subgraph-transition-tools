@@ -3,7 +3,7 @@
 This project provides a suite of tools for verifying that [ENSNode](https://github.com/namehash/ensnode) is a reliable replacement for the ENS Subgraph.
 
 - **Snapshot Equivalency Tool**: 1:1 data
-- **API Equivalency Tool**: 1:1 API responses
+- **Resolution Equivalency Tool**: 1:1 resolution responses
 
 ## Install
 
@@ -96,12 +96,8 @@ for the subgraph, [timetravel queries](https://thegraph.com/docs/en/subgraphs/qu
 
 for ENSNode, timetravel is not supported, so ENSIndexer should be run until the specified `endBlock` and then snapshotted with this tool.
 
-## api equivalency tool (`api-eq`)
+## resolution equivalency tool (`resolution-eq`)
 
 🚧 WIP
 
-> This tool verifies equivalency in API responses between the ENS Subgraph and ENSNode by comparing results from live queries in realtime.
-
-### Description
-
-This tool acts as a drop-in replacement for the subgraph URL in any project. When your app queries this endpoint, it first fetches the result from ENSNode, including the meta field to indicate which block the data is valid at. It then injects that block number into the subgraph query, waiting until the subgraph has indexed that block, in order to ensure that each indexer is operating on the same blockheight. Upon receiving the results from each, it diffs their responses, throwing a graphql error highlighting any discrepancies. In a 'production' mode, the errors could be surfaced asynchronously (and the subgraph's response returned) in order to accumulate queries that don't produce identical results.
+> This tool verifies equivalency in resolution responses between different ENS resolution services.
