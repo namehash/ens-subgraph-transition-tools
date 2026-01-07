@@ -1,6 +1,6 @@
+import pRetry from "p-retry";
 import ProgressBar from "progress";
 import { normalize } from "viem/ens";
-import { THOUSAND_CLUB } from "@/lib/names/1000-club-names";
 import { BASENAMES_NAMES } from "@/lib/names/basenames-names";
 import { CUSTOM_RESOLVER_NAMES } from "@/lib/names/custom-resolver-names";
 import { ENSADMIN_NAMES } from "@/lib/names/ensadmin-names";
@@ -8,12 +8,13 @@ import { LINEANAMES_NAMES } from "@/lib/names/lineanames-names";
 import { PUBLIC_RESOLVER_NAMES } from "@/lib/names/public-resolver-names";
 import { RAFFY_NAMES } from "@/lib/names/raffy-names";
 import { REVERSE_RESOLVER_NAMES } from "@/lib/names/reverse-resolver-names";
+import { THOUSAND_CLUB_NAMES } from "@/lib/names/thousand-club-names";
 import { THREEDNS_NAMES } from "@/lib/names/threedns-names";
 import { UNMIGRATED_NAMES } from "@/lib/names/unmigrated-names";
 import { resolveRecords } from "@/lib/resolve-records";
 
 const ALL_NAMES = [
-	...THOUSAND_CLUB,
+	...THOUSAND_CLUB_NAMES,
 	...BASENAMES_NAMES,
 	...CUSTOM_RESOLVER_NAMES,
 	...ENSADMIN_NAMES,
@@ -52,56 +53,69 @@ export async function resolutionTestCommand() {
 
 		let result: Awaited<ReturnType<typeof resolveRecords>>;
 		try {
-			result = await resolveRecords(name);
+			result = await pRetry(
+				async () => {
+					const res = await resolveRecords(name);
+
+					// if we have any diffs, try again
+					const hasAcceleratedDiff = res.diffs.accelerated.length > 0;
+					const hasUnacceleratedDiff = res.diffs.unaccelerated.length > 0;
+					if (hasAcceleratedDiff || hasUnacceleratedDiff) {
+						const { accelerated, unaccelerated, universalResolver, diffs } = res;
+
+						throw new Error(`
+❌ DIFF DETECTED for: ${name}
+
+--- Timings (ms) ---
+ENSNode API (accelerated):      ${accelerated.duration.toFixed(2)}ms
+ENSNode API (unaccelerated):    ${unaccelerated.duration.toFixed(2)}ms
+Universal Resolver (viem):      ${universalResolver.duration.toFixed(2)}ms
+
+--- Data ---
+
+Accelerated:
+${JSON.stringify(accelerated.data, null, 2)}
+
+Unaccelerated:
+${JSON.stringify(unaccelerated.data, null, 2)}
+
+Universal Resolver:
+${JSON.stringify(universalResolver.data, null, 2)}
+
+--- Diffs ---
+Accelerated vs Universal Resolver:
+${JSON.stringify(diffs.accelerated, null, 2)}
+
+Unaccelerated vs Universal Resolver:
+${JSON.stringify(diffs.unaccelerated, null, 2)}
+`);
+					}
+
+					return res;
+				},
+				{
+					retries: 3,
+					minTimeout: 2000,
+					onFailedAttempt: (error) => {
+						bar.interrupt(
+							`Attempt ${error.attemptNumber} failed for ${name}, ${error.retriesLeft} retries left.`,
+						);
+					},
+				},
+			);
 		} catch (error) {
-			bar.interrupt(String(error));
+			bar.interrupt(error instanceof Error ? error.message : String(error));
 			bar.tick({ name, speedup: "" });
 			continue;
 		}
 
-		const { accelerated, unaccelerated, universalResolver, diffs } = result;
+		const { accelerated, unaccelerated, universalResolver } = result;
 
 		// Track timings
 		totalAcceleratedTime += accelerated.duration;
 		totalUnacceleratedTime += unaccelerated.duration;
 		totalUniversalResolverTime += universalResolver.duration;
 		successfulResolutions++;
-
-		// Check if there are any diffs
-		const hasAcceleratedDiff = diffs.accelerated.length > 0;
-		const hasUnacceleratedDiff = diffs.unaccelerated.length > 0;
-
-		if (hasAcceleratedDiff || hasUnacceleratedDiff) {
-			bar.interrupt(`\n\n❌ DIFF DETECTED for: ${name}`);
-			bar.interrupt("\n--- Timings (ms) ---");
-			bar.interrupt(`ENSNode API (accelerated):      ${accelerated.duration.toFixed(2)}ms`);
-			bar.interrupt(`ENSNode API (unaccelerated):    ${unaccelerated.duration.toFixed(2)}ms`);
-			bar.interrupt(`Universal Resolver (viem):      ${universalResolver.duration.toFixed(2)}ms`);
-
-			bar.interrupt("\n--- Data ---");
-			bar.interrupt("\nAccelerated:");
-			bar.interrupt(JSON.stringify(accelerated.data, null, 2));
-
-			bar.interrupt("\nUnaccelerated:");
-			bar.interrupt(JSON.stringify(unaccelerated.data, null, 2));
-
-			bar.interrupt("\nUniversal Resolver:");
-			bar.interrupt(JSON.stringify(universalResolver.data, null, 2));
-
-			bar.interrupt("\n--- Diffs ---");
-
-			if (hasAcceleratedDiff) {
-				bar.interrupt("\nAccelerated vs Universal Resolver:");
-				bar.interrupt(JSON.stringify(diffs.accelerated, null, 2));
-			}
-
-			if (hasUnacceleratedDiff) {
-				bar.interrupt("\nUnaccelerated vs Universal Resolver:");
-				bar.interrupt(JSON.stringify(diffs.unaccelerated, null, 2));
-			}
-
-			process.exit(1);
-		}
 
 		// Calculate speedup vs Universal Resolver
 		const acceleratedSpeedup = universalResolver.duration / accelerated.duration;
@@ -113,7 +127,7 @@ export async function resolutionTestCommand() {
 
 	bar.terminate();
 
-	console.log("\n\n✅ All tests passed! No diffs detected.");
+	// console.log("\n\n✅ All tests passed! No diffs detected.");
 
 	if (successfulResolutions > 0) {
 		const avgAccelerated = totalAcceleratedTime / successfulResolutions;

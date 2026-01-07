@@ -47,7 +47,7 @@ export async function waitForPonderReady(chainId: number, targetBlockheight: num
 
 		// error check
 		if (curr > targetBlockheight) {
-			throw new Error(`ENSIndexer indexed further than expected ${targetBlockheight}!`);
+			throw new Error(`ENSIndexer indexed further (${curr}) than expected ${targetBlockheight}!`);
 		}
 
 		// huzzah
