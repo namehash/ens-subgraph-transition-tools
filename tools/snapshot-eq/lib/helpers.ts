@@ -4,11 +4,9 @@ import type { TypedDocumentNode } from "@urql/core";
 export const makeSubgraphUrl = (namespace: ENSNamespaceId, apiKey: string) => {
 	switch (namespace) {
 		case "mainnet":
-			return `https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/5XqPmWe6gjyrJtFn9cLy237i4cWw2j9HcUJEXsP5qGtH`;
+			return "https://graphnode.namehashlabs.org:8000/subgraphs/name/namehash/ens-subgraph-mainnet";
 		case "sepolia":
-			return `https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/DmMXLtMZnGbQXASJ7p1jfzLUbBYnYUD9zNBTxpkjHYXV`;
-		case "holesky":
-			return `https://api.studio.thegraph.com/query/49574/ensholesky/version/latest?api_key=${apiKey}`;
+			return "https://graphnode.namehashlabs.org:8000/subgraphs/name/namehash/ens-subgraph-3";
 		default:
 			throw new Error(`Unsupported --namespace: ${namespace}`);
 	}

@@ -27,13 +27,13 @@ configure via env variables or `.env.local` at root of project:
 
 commands, (run from `tools/snapshot-eq`):
 - `bun start --help`
-- `bun start snapshot <blockheight> <ensnode|subgraph> [--deployment=(mainnet|sepolia|holesky)]`
+- `bun start snapshot <blockheight> <ensnode|subgraph> [--deployment=(mainnet|sepolia)]`
   - takes a 'snapshot' of the indexer at the provided blockheight by iterating over all pages of resources, persisting responses to `snapshots/`
   - if ensnode, code waits for the indexer to be ready at that blockheight and CLUSTERs the `public` schema
   - if subgraph, timetravel queries are used to fetch data
-- `bun start clean <blockheight> <ensnode|subgraph> [--deployment=(mainnet|sepolia|holesky)]`
+- `bun start clean <blockheight> <ensnode|subgraph> [--deployment=(mainnet|sepolia)]`
   - deletes the specific `snapshots/` directory
-- `bun start diff <blockheight> [--deployment=(mainnet|sepolia|holesky)]`
+- `bun start diff <blockheight> [--deployment=(mainnet|sepolia)]`
   - using subgraph responses as the source of truth, compares snapshots and prints any differences between them
 
 ### Snapshot Example Usage
