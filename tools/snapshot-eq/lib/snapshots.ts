@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 
-import type { ENSNamespaceId } from "@ensnode/datasources";
+import type { ENSNamespaceId } from "@ensnode/ensnode-sdk";
 import type { Indexer } from "./types";
 
 // NOTE: don't love this, is there a better way to get to the root of the monorepo?

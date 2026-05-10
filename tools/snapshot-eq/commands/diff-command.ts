@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import type { ENSNamespaceId } from "@ensnode/datasources";
+import type { ENSNamespaceId } from "@ensnode/ensnode-sdk";
 import { Glob } from "bun";
 import { atomizeChangeset, diff } from "json-diff-ts";
 import ProgressBar from "progress";

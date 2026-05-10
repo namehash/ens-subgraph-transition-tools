@@ -1,4 +1,4 @@
-import { type ENSNamespaceId, ENSNamespaceIds } from "@ensnode/datasources";
+import { type ENSNamespaceId, ENSNamespaceIds } from "@ensnode/ensnode-sdk";
 import yargs from "yargs/yargs";
 
 import { cleanCommand } from "@/commands/clean-command";

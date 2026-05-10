@@ -1,4 +1,4 @@
-import type { ENSNamespaceId } from "@ensnode/datasources";
+import type { ENSNamespaceId } from "@ensnode/ensnode-sdk";
 import { type Client, createRequest, type TypedDocumentNode } from "@urql/core";
 import { print } from "graphql";
 import PQueue from "p-queue";

@@ -1,5 +1,5 @@
 import { rm } from "node:fs/promises";
-import type { ENSNamespaceId } from "@ensnode/datasources";
+import type { ENSNamespaceId } from "@ensnode/ensnode-sdk";
 import { makeSnapshotDirectoryPath } from "@/lib/snapshots";
 import type { Indexer } from "@/lib/types";
 
